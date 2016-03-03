@@ -1,6 +1,13 @@
 #!/bin/sh
 set -eo pipefail
 
+if test "$1" = "--help" ; then
+  echo Usage:
+  echo -e "\t$0 \t\tto download(if needed) and start"
+  echo -e "\t$0 stop \tto stop"
+  exit
+fi
+
 cd $(dirname $0)
 echo "cd $(pwd)"
 archive_prefix="db-derby-10.12.1.1-lib"
