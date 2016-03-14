@@ -1,5 +1,5 @@
 #!/bin/sh
-set -eo pipefail
+set -o pipefail
 
 if test "$1" = "--help" ; then
   echo Usage:
