@@ -10,7 +10,7 @@ test -f "$archive_prefix".zip || curl -O $lib_url
 local derby_run_path="$archive_prefix/lib/derbyrun.jar"
 
 test -f $derby_run_path || unzip "$archive_prefix".zip
-local derby_run="$(readlink -f $derby_run_path)"
+#local derby_run="$(readlink -f $derby_run_path)"
 
 derby(){
 if test "$1" = "--help" ; then
@@ -22,12 +22,14 @@ fi
 
 if test "$1" = "stop"; then
   echo "trying to stop"
-  java -jar $derby_run server ping && java -jar $derby_run server shutdown
+  java -jar $derby_run_path server ping && java -jar $derby_run_path server shutdown
 else
   echo "starting if not already"
-  java -jar $derby_run server ping || java -jar $derby_run server start &
+  java -jar $derby_run_path server ping || java -jar $derby_run_path server start &
 fi
 }
 
 echo "derby handler installed"
 
+
+# "java -jar" removed from the beginning of each parof the commands

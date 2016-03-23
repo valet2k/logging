@@ -12,7 +12,7 @@ derby_path=db-derby-10.12.1.1-lib/lib/derbyrun.jar
 ij="java -jar $derby_path ij "
 #cygpath && $ij "$(cygpath -w $tmp)" || $ij $tmp
 
-worl=$(which cygcheck) 
+worl= $(which cygcheck) 
 
 #$ij "$(cygpath -w $tmp)"
 

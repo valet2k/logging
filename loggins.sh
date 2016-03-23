@@ -7,7 +7,7 @@ autoload -U add-zsh-hook
 # Start derby
 echo "Welcome to Valet 2000"
 echo "Loading command database..."
-./derby.sh &> /dev/null
+#./derby.sh &> /dev/null
 echo "Valet is online"
 
 # Create the variables for temporary storage
@@ -23,7 +23,7 @@ function status()
 	ENTRY="$CMDS$ARGS$FILES $?"
         #echo "$ENTRY"
         
-	./logcmd.sh $ENTRY &> /dev/null
+	#./logcmd.sh $ENTRY &> /dev/null
 
 	# Zero out the variables before the next command is entered
 	CMDS=""
@@ -57,8 +57,12 @@ function loggins()
 		elif [[ $word == *-* ]]; then
 			ARGS="$ARGS $word"
 
+		elif [ $word = "|" ]; then
+			echo "I have a pipe!"
+
 		else
 			FILES="$FILES $word"
+
 		fi
 
 		index=$(($index+1))
@@ -82,39 +86,6 @@ function explain ()
 		(curl -Gs "https://www.mankier.com/api/explain/?cols="$(tput cols) --data-urlencode "q=$1") >> explain.txt &
 	fi
 }	
-
-
-export PATH=$HOME/bin:/usr/local/bin:$PATH
-# export MANPATH="/usr/local/man:$MANPATH"
-
-source $ZSH/oh-my-zsh.sh
-
-
-# You may need to manually set your language environment
-# export LANG=en_US.UTF-8
-
-# Preferred editor for local and remote sessions
-# if [[ -n $SSH_CONNECTION ]]; then
-#   export EDITOR='vim'
-# else
-#   export EDITOR='mvim'
-# fi
-
-# Compilation flags
-# export ARCHFLAGS="-arch x86_64"
-
-# ssh
-# export SSH_KEY_PATH="~/.ssh/dsa_id"
-
-# Set personal aliases, overriding those provided by oh-my-zsh libs,
-# plugins, and themes. Aliases can be placed here, though oh-my-zsh
-# users are encouraged to define aliases within the ZSH_CUSTOM folder.
-# For a full list of active aliases, run `alias`.
-#
-# Example aliases
-# alias zshconfig="mate ~/.zshrc"
-# alias ohmyzsh="mate ~/.oh-my-zsh"
-
 
 # ADD THE HOOK FUNCTIONS
 add-zsh-hook precmd  status
