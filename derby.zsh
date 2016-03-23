@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-set -eo pipefail
+set -o pipefail
 
 cd $(dirname $0)
 local archive_prefix="db-derby-10.12.1.1-lib"
@@ -20,14 +20,14 @@ if test "$1" = "--help" ; then
   exit
 fi
 
-if test "$1" = "stop" ; then
-  echo trying to stop
+if test "$1" = "stop"; then
+  echo "trying to stop"
   java -jar $derby_run server ping && java -jar $derby_run server shutdown
 else
-  echo starting if not already
+  echo "starting if not already"
   java -jar $derby_run server ping || java -jar $derby_run server start &
 fi
 }
 
-echo derby handler installed
+echo "derby handler installed"
 

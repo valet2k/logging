@@ -10,4 +10,17 @@ for each in $(ls ijtest.sql.* | sort -g -k 3 -t .); do
 done;
 derby_path=db-derby-10.12.1.1-lib/lib/derbyrun.jar
 ij="java -jar $derby_path ij "
-cygpath && $ij "$(cygpath -w $tmp)" || $ij $tmp
+#cygpath && $ij "$(cygpath -w $tmp)" || $ij $tmp
+
+worl=$(which cygcheck) 
+
+#$ij "$(cygpath -w $tmp)"
+
+if [ $worl = "/usr/bin/cygcheck" ]; then
+	$ij "$(cygpath -w $tmp)"
+else
+	$ij $tmp
+fi
+
+#java -jar $iderby_path ij "$(cygpath -w $tmp)"
+# /usr/bin/cygcheck
