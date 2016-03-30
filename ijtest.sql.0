@@ -4,6 +4,7 @@ connect 'jdbc:derby://localhost:1527/sampledb;create=true';
 /*drop table t;*/;
 -- creating table if needed
 create table t(t bigint);
+
 -- updating table if needed
 alter table t add primary key (t);
 alter table t add command varchar(80);

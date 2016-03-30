@@ -5,31 +5,40 @@
 autoload -U add-zsh-hook
 
 # Start derby
+source load.zsh &> /dev/null
+
+#iset +m
+derby &> /dev/null
+sleep 1
 echo "Welcome to Valet 2000"
-echo "Loading command database..."
-#./derby.sh &> /dev/null
-echo "Valet is online"
+
+#echo "Loading command database..."
+#echo "Valet is online"
 
 # Create the variables for temporary storage
 CMDS=""
 ARGS=""
 FILES=""
 ENTRY=""
+TYPE=""
+
+# Disable monitoring with set +m (prevents background tasks from interuptting constantly)
+set +m
 
 # THE PRECMD FUNCTIONS
 # Retrieve the latest return value, and log the data to the database.
 function status()
 {
 	ENTRY="$CMDS$ARGS$FILES $?"
-        #echo "$ENTRY"
-        
-	#./logcmd.sh $ENTRY &> /dev/null
+                
+	./logcmd.sh $ENTRY &> /dev/null &
 
 	# Zero out the variables before the next command is entered
 	CMDS=""
 	ARGS=""
 	FILES=""
 	ENTRY=""
+	TYPE=""
 }
 
 
@@ -37,9 +46,6 @@ function status()
 # Log the data into files
 function loggins()
 {
-	# Disable monitoring with set +m (prevents background tasks from interuptting constantly)
-	#set +m
-
 	# First, try to find the type of command
 	command=$1
 	CMDS=$command[(w)1]
@@ -69,14 +75,12 @@ function loggins()
 	done
 	
 	# Use where to determine whether the command is a builtin, an installed program, or and invalid command
-	(where $CMDS) >> where.txt
-	(echo $1)  >> log.txt
+	TYPE=$(where $CMDS)
+	#(echo $1)  >> log.txt
 	#echo "${@: -1}"
 	#echo "${BASH_ARGV[0]}"
 	#echo $@
 	#echo $#
-	# ./script.sh $1 &
-	# ./spooky.exe $1 &
 }
 
 # If possible, check to see if the command entered is valid via mankier.com
@@ -87,7 +91,28 @@ function explain ()
 	fi
 }	
 
+# The ZSHEXIT functions
+function shutdown()
+{
+	echo "Shutting down..."
+	derby stop &> /dev/null
+	set -m
+}
+
+# OTHER USEFULE FUNCTIONS
+function quit()
+{
+	echo "Shutting down..."
+	derby stop &> /dev/null
+	set -m
+	add-zsh-hook -D precmd status
+	add-zsh-hook -D preexec loggins
+	add-zsh-hook -D zshexit shutdown
+	source $HOME/.zshrc
+}
+
 # ADD THE HOOK FUNCTIONS
 add-zsh-hook precmd  status
 add-zsh-hook preexec loggins
 #add-zsh-hook preexec explain
+add-zsh-hook zshexit shutdown
