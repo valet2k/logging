@@ -3,6 +3,7 @@ package com.github.valet2k;
 import com.github.valet2k.columns.LastCommand;
 import com.github.valet2k.columns.WorkingDirectory;
 import com.github.valet2k.nails.HistoryLogger;
+import com.github.valet2k.nails.HistoryML;
 import com.github.valet2k.nails.HistoryRemove;
 import com.github.valet2k.nails.HistoryShow;
 import com.martiansoftware.nailgun.Alias;
@@ -40,6 +41,7 @@ public class Core {
         aliasManager.addAlias(new Alias("lognew", "Add entry to history - should have env/typeset piped into stdin, and command line as arguments.", HistoryLogger.class));
         aliasManager.addAlias(new Alias("logrm", "Remove history entry", HistoryRemove.class));
         aliasManager.addAlias(new Alias("logshow", "Show log (optional number of entries)", HistoryShow.class));
+        aliasManager.addAlias(new Alias("logml", "", HistoryML.class));
         ngServer.run();
     }
 
