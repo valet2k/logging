@@ -9,7 +9,10 @@ derby&
 export valet2k_ng=$PWD/nailgun/ng
 
 cd assistant
+# this test doesn't work - not sure why yet
 pgrep -f com.github.valet2k || mvn exec:java&
 
-cd $olddir
+cd $dir
 source addhook.zsh
+
+cd $olddir
