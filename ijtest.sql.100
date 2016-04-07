@@ -1,4 +1,0 @@
--- contents
-select * from t;
--- done
-disconnect;
