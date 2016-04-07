@@ -23,10 +23,17 @@ fi
 if test "$1" = "stop"; then
   echo "trying to stop"
   java -jar $derby_run_path server ping && java -jar $derby_run_path server shutdown
+elif test "$1" = "bg"; then
+  echo "starting if not already"
+  java -jar $derby_run_path server ping || nohup java -jar $derby_run_path server start&
 else
   echo "starting if not already"
-  java -jar $derby_run_path server ping || java -jar $derby_run_path server start &
+  java -jar $derby_run_path server ping || java -jar $derby_run_path server start
 fi
+}
+
+ij(){
+  java -jar $derby_run_path ij
 }
 
 echo "derby handler installed"
