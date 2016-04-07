@@ -4,13 +4,12 @@ local olddir=$PWD
 
 cd $dir # logging directory
 source derby.zsh
-derby&
+derby bg
 
 export valet2k_ng=$PWD/nailgun/ng
 
 cd assistant
-# this test doesn't work - not sure why yet
-pgrep -f com.github.valet2k || mvn exec:java&
+../nailgun/ng ng-alias | grep lognew > /dev/null || nohup mvn exec:java&
 
 cd $dir
 source addhook.zsh
