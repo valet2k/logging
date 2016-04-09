@@ -1,0 +1,5 @@
+language: java
+
+install:
+  - git clone git@github.com:martylamb/nailgun.git
+  - cd nailgun && mvn install
