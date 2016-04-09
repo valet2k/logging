@@ -4,5 +4,5 @@ install:
   - git clone https://github.com/martylamb/nailgun.git
   - cd nailgun/nailgun-server && mvn install -Dmaven.javadoc.skip=true && cd ../../
 
-build:
+script:
   - cd assistant && mvn package && cd ..
