@@ -1,9 +1,22 @@
 language: java
 jdk: oraclejdk8
-
 install:
-  - git clone https://github.com/martylamb/nailgun.git
-  - cd nailgun/nailgun-server && mvn install -Dmaven.javadoc.skip=true && cd ../../
-
+- git clone https://github.com/martylamb/nailgun.git
+- cd nailgun/nailgun-server && mvn install -Dmaven.javadoc.skip=true && cd ../../
 script:
-  - cd assistant && mvn package && cd ..
+- cd assistant && mvn package && cd ..
+before_deploy:
+- mkdir deploy
+- mv assistant/target/assistant*.jar deploy/
+deploy:
+  skip_cleanup: true
+  provider: s3
+  access_key_id: AKIAJHKY3MT3JTDDUEJA
+  secret_access_key:
+    secure: dhvNXSDgJb1grUuA31MkuqeU2ym0E8DjjLKM73Jnxi6Sy5Uy0KYeTXE5ceRNw1itJD81naSADP75lSgy4y0oSwYPJhuz6DHibrLKj2CIn2EC7Debch4iM1Ehcs/GFAzlEwu9lV+CsZBalMGuwmrUnHr7JMTqrAdVHfM5msJxiTlp8tnefvIEyGsZXccCRBkk7UigiK9NhT+rE9SjXxRqVKpSppb7knZ3mZcbD51XMwRIIIdi7Qsf36IES6me+W133lia7HuN4V2cw5AlaCORqBqi8ji9HUDLwZC1MQrdbnhV33dcqGWfbQ3+4V93LVmoc/5pIq1+HzZ3HoxEoYqzLOu3Mo8DngTyN12yd+pNUYZRxSvtNrJ4YOn/ghWkPRfshfhUmGTyobXDEI9xNk51thaGJbBOukX6STBVCKpUwlusgbcSJHAG5fMey5xhtqW/XAhmHvwJAKPjpy+bct9OcmVqW9vseCKMWdcfGq7g4mXppv4XpKfGfwp/arKwDCyjQtFl+HPcEunSdNMPSKWBt28im39imnlvqJqpKs6UbUJ3zkikAUHtI60+T2xUuxSLPpAr/6IX/VUIyZGcaHMWAzwF6XWgVOPK8J3ZpCFpRS8x6aIq3SfnJG7kYFySFC8vICtCcjsocgoWNgveYhHf3RNaAgl//Yw0caP1tgrvoCE=
+  bucket: valet2k
+  local-dir: deploy
+  upload-dir: builds
+  acl: public_read
+  on:
+    repo: valet2k/logging
