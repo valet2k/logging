@@ -1,6 +1,7 @@
 package com.github.valet2k.nails;
 
 import com.github.valet2k.Core;
+import com.martiansoftware.nailgun.Alias;
 import com.martiansoftware.nailgun.NGContext;
 import org.apache.spark.ml.feature.HashingTF;
 import org.apache.spark.ml.feature.IDF;
@@ -22,9 +23,11 @@ import static org.apache.spark.sql.functions.when;
 public class HistoryML {
     public static final String LASTCOMMAND = "LASTCOMMAND";
     public static final String WORKINGDIRECTORY = "WORKINGDIRECTORY";
+    public static final Alias LOGML = new Alias("logml", "", HistoryML.class);
 
     public static void nailMain(NGContext ctx) {
         DataFrame df = Core.df;
+        // remove nulls so avoid NPE
         df = df.withColumn(WORKINGDIRECTORY, when(col(WORKINGDIRECTORY).isNull(), lit("")).otherwise(col(WORKINGDIRECTORY)));
 
         RegexTokenizer regexTokenizer1 = new RegexTokenizer().setGaps(false).setPattern("[\\w.-]+").setInputCol(LASTCOMMAND).setOutputCol(LASTCOMMAND + "WORDS");

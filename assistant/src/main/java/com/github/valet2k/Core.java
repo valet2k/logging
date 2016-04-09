@@ -1,16 +1,18 @@
 package com.github.valet2k;
 
 import com.github.valet2k.columns.LastCommand;
+import com.github.valet2k.columns.Typeset;
 import com.github.valet2k.columns.WorkingDirectory;
 import com.github.valet2k.nails.HistoryLogger;
 import com.github.valet2k.nails.HistoryML;
 import com.github.valet2k.nails.HistoryRemove;
 import com.github.valet2k.nails.HistoryShow;
-import com.martiansoftware.nailgun.Alias;
 import com.martiansoftware.nailgun.AliasManager;
 import com.martiansoftware.nailgun.NGServer;
 import org.apache.derby.jdbc.ClientConnectionPoolDataSource;
 import org.apache.derby.jdbc.ClientDataSource;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.DataFrame;
@@ -23,6 +25,7 @@ import java.util.Properties;
 public class Core {
     public static ClientDataSource pool;
     public static DataFrame df;
+    static Logger logger = LogManager.getLogger(Core.class);
 
     public static void main(String[] args) {
         ClientConnectionPoolDataSource derby = new ClientConnectionPoolDataSource();
@@ -38,11 +41,13 @@ public class Core {
 
         NGServer ngServer = new NGServer();
         AliasManager aliasManager = ngServer.getAliasManager();
-        aliasManager.addAlias(new Alias("lognew", "Add entry to history - should have env/typeset piped into stdin, and command line as arguments.", HistoryLogger.class));
-        aliasManager.addAlias(new Alias("logrm", "Remove history entry", HistoryRemove.class));
-        aliasManager.addAlias(new Alias("logshow", "Show log (optional number of entries)", HistoryShow.class));
-        aliasManager.addAlias(new Alias("logml", "", HistoryML.class));
+        aliasManager.addAlias(HistoryLogger.LOGNEW);
+        aliasManager.addAlias(HistoryRemove.LOGRM);
+        aliasManager.addAlias(HistoryShow.LOGSHOW);
+        aliasManager.addAlias(HistoryML.LOGML);
+        logger.info("Starting Nailgun RPC");
         ngServer.run();
+        logger.info("We're done here");
     }
 
     private static void init() {
@@ -59,6 +64,7 @@ public class Core {
             // explicit now, modular later
             LastCommand.init(connection);
             WorkingDirectory.init(connection);
+            Typeset.init(connection);
             connection.close();
         } catch (SQLException e) {
             e.printStackTrace();

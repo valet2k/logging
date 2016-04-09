@@ -1,6 +1,7 @@
 package com.github.valet2k.nails;
 
 import com.github.valet2k.Core;
+import com.martiansoftware.nailgun.Alias;
 import com.martiansoftware.nailgun.NGContext;
 
 import java.sql.*;
@@ -9,6 +10,8 @@ import java.sql.*;
  * Created by automaticgiant on 4/6/16.
  */
 public class HistoryRemove {
+    public static final Alias LOGRM = new Alias("logrm", "Remove history entry", HistoryRemove.class);
+
     public static void nailMain(NGContext ctx) {
         Connection connection = null;
         try {

@@ -2,7 +2,9 @@ package com.github.valet2k.nails;
 
 import com.github.valet2k.Core;
 import com.github.valet2k.columns.LastCommand;
+import com.github.valet2k.columns.Typeset;
 import com.github.valet2k.columns.WorkingDirectory;
+import com.martiansoftware.nailgun.Alias;
 import com.martiansoftware.nailgun.NGContext;
 
 import java.sql.Connection;
@@ -14,6 +16,8 @@ import java.sql.Statement;
  * Created by automaticgiant on 4/6/16.
  */
 public class HistoryLogger {
+    public static final Alias LOGNEW = new Alias("lognew", "Add entry to history - should have env/typeset piped into stdin, and command line as arguments.", HistoryLogger.class);
+
     // nailgun's contract
     public static void nailMain(NGContext ctx) {
         Connection connection = null;
@@ -27,6 +31,7 @@ public class HistoryLogger {
             // can convert to modular iteration later
             LastCommand.update(connection, ctx, index);
             WorkingDirectory.update(connection, ctx, index);
+            Typeset.update(connection, ctx, index);
             // others here
             connection.close();
         } catch (SQLException e) {
