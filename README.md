@@ -17,5 +17,7 @@ Nails:
 * lognew [command line] - add log entry with command line being args
 * logrm n - remove row n from log
 
-TODO:
-* need shell aliases/functions to shorten nail calls?
+Travis:
+* travis-ci.org builds the project automagically, and deploys artifacts to s3,
+  if it builds successfully
+* builds can be retrieved from `https://s3.amazonaws.com/valet2k/builds/assistant-{version}.jar`
