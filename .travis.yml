@@ -2,7 +2,7 @@ language: java
 
 install:
   - git clone https://github.com/martylamb/nailgun.git
-  - cd nailgun && mvn install
+  - cd nailgun/nailgun-server && mvn install
 
 build:
   - cd assistant
