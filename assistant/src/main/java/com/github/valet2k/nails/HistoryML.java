@@ -27,8 +27,10 @@ public class HistoryML {
 
     public static void nailMain(NGContext ctx) {
         DataFrame df = Core.df;
+        df = df.drop("TYPESET");
         // remove nulls so avoid NPE
         df = df.withColumn(WORKINGDIRECTORY, when(col(WORKINGDIRECTORY).isNull(), lit("")).otherwise(col(WORKINGDIRECTORY)));
+        df = df.withColumn(LASTCOMMAND, when(col(LASTCOMMAND).isNull(), lit("")).otherwise(col(LASTCOMMAND)));
 
         RegexTokenizer regexTokenizer1 = new RegexTokenizer().setGaps(false).setPattern("[\\w.-]+").setInputCol(LASTCOMMAND).setOutputCol(LASTCOMMAND + "WORDS");
         df = regexTokenizer1.transform(df);
