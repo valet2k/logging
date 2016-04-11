@@ -70,6 +70,7 @@ public class Core {
                                 "PRIMARY KEY (id) )");
             } catch (SQLException e) {
                 logger.warn("couldn't create table", e);
+                //TODO: ignore if already there
             }
             // explicit now, modular later
             LastCommand.init(connection);
