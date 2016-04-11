@@ -23,9 +23,14 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 public class Core {
+    private static final Logger logger;
+    static {
+        logger = LogManager.getLogger(Core.class);
+        logger.trace("Core loaded");
+    }
+
     public static ClientDataSource pool;
     public static DataFrame df;
-    static Logger logger = LogManager.getLogger(Core.class);
 
     public static void main(String[] args) {
         ClientConnectionPoolDataSource derby = new ClientConnectionPoolDataSource();
