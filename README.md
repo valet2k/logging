@@ -1,4 +1,5 @@
 # logging
+[![Build Status](https://travis-ci.org/valet2k/logging.svg?branch=master)](https://travis-ci.org/valet2k/logging)
 
 * derby.zsh - bootstraps/controls a derby network server
 * load.zsh - entry point for adding to shell
