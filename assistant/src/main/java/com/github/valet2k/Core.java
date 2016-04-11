@@ -29,23 +29,28 @@ public class Core {
         logger.trace("Core loaded");
     }
 
+    private static final NGServer ngServer = new NGServer();
+    public static final AliasManager aliasManager = ngServer.getAliasManager();
+
     public static ClientDataSource pool;
     public static DataFrame df;
 
     public static void main(String[] args) {
+
+        // TODO: move to logging module
         ClientConnectionPoolDataSource derby = new ClientConnectionPoolDataSource();
         derby.setServerName("localhost");
+        derby.setCreateDatabase("create");
         derby.setDatabaseName("sampledb");
         pool = derby;
-        init();
+        db_init();
 
+        // TODO: move to ml module
         SparkConf conf = new SparkConf().setAppName("valet").setMaster("local");
         JavaSparkContext sc = new JavaSparkContext(conf);
         SQLContext sq = new SQLContext(sc);
         df = sq.read().jdbc("jdbc:derby://localhost:1527/sampledb", "valet2k_history", new Properties());
 
-        NGServer ngServer = new NGServer();
-        AliasManager aliasManager = ngServer.getAliasManager();
         aliasManager.addAlias(HistoryLogger.LOGNEW);
         aliasManager.addAlias(HistoryRemove.LOGRM);
         aliasManager.addAlias(HistoryShow.LOGSHOW);
@@ -55,16 +60,16 @@ public class Core {
         logger.info("We're done here");
     }
 
-    private static void init() {
+    private static void db_init() {
         try {
             Connection connection = pool.getConnection();
             try {
                 connection.createStatement().execute(
                         "CREATE TABLE valet2k_history ( " +
                                 "id INT NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1), " +
-                                "PRIMARY KEY (id) );");
+                                "PRIMARY KEY (id) )");
             } catch (SQLException e) {
-                // ok
+                logger.warn("couldn't create table", e);
             }
             // explicit now, modular later
             LastCommand.init(connection);
@@ -73,7 +78,7 @@ public class Core {
             connection.close();
         } catch (SQLException e) {
             e.printStackTrace();
-            System.err.println("database error on init");
+            System.err.println("database error on db_init");
         }
     }
 }
