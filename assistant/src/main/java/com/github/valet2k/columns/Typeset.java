@@ -2,6 +2,8 @@ package com.github.valet2k.columns;
 
 import com.martiansoftware.nailgun.NGContext;
 import org.apache.commons.io.IOUtils;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -13,14 +15,20 @@ import java.sql.Statement;
  * Created by automaticgiant on 4/6/16.
  */
 public class Typeset {
+    private static final Logger logger;
+
+    static {
+        logger = LogManager.getLogger(Typeset.class);
+        logger.trace("Typeset loaded");
+    }
+
     public static void init(Connection con) throws SQLException {
         try {
             Statement statement = con.createStatement();
             statement.execute("ALTER TABLE valet2k_history ADD Typeset VARCHAR(32672)");
         } catch (SQLException e) {
-            System.err.println(e);
-            e.printStackTrace();
-            // ok
+            if (!(e.getSQLState().equals("X0Y32") && e.getErrorCode() == 30000))
+                logger.warn("couldn't add column for typeset, error code: " + e.getErrorCode() + ", state: " + e.getSQLState(), e);
         }
     }
 
