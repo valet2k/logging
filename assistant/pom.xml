@@ -63,6 +63,19 @@
                     </execution>
                 </executions>
             </plugin>
+            <!--if needing package goal, clone and install https://github.com/manouti/jar-timestamp-normalize-maven-plugin.git-->
+            <plugin>
+                <groupId>com.github.manouti</groupId>
+                <artifactId>jar-timestamp-normalize-maven-plugin</artifactId>
+                <version>1.0-SNAPSHOT</version>
+                <executions>
+                    <execution>
+                        <id>jar-normalize</id>
+                        <goals><goal>normalize</goal></goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
     <name>assistant</name>
