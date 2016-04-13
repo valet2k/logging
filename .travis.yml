@@ -1,13 +1,11 @@
 language: java
 jdk: oraclejdk8
 install:
-- git clone https://github.com/martylamb/nailgun.git
-- cd nailgun/nailgun-server && mvn install -Dmaven.javadoc.skip=true && cd ../../
+- cd nailgun-git/nailgun-server && mvn install -Dmaven.javadoc.skip=true && cd ../../
 script:
 - cd assistant && mvn package && cd ..
 before_deploy:
-- mkdir deploy
-- mv assistant/target/assistant*.jar deploy/
+- sh before_deploy.sh
 deploy:
   skip_cleanup: true
   provider: s3

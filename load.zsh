@@ -1,17 +1,21 @@
 #!/usr/bin/env zsh
-local dir=$(dirname $0)
-local olddir=$PWD
 
-cd $dir # logging directory
-source derby.zsh
-derby bg
+valet2k_repo=$(dirname $(readlink -e $0))
+lastpwd=$PWD
 
-export valet2k_ng=$PWD/nailgun/ng
+make -C $valet2k_repo/nailgun-git ng
+export valet2k_ng=$valet2k_repo/nailgun-git/ng
 
-cd assistant
-../nailgun/ng ng-alias | grep lognew > /dev/null || nohup mvn exec:java&
+autoload add-zsh-hook
+add-zsh-hook -d precmd log
+function log(){
+  #get detailed env and send last history line as args
+  #TODO: change
+  typeset | $valet2k_ng lognew $(fc -ln -1)
+}
+add-zsh-hook precmd log
 
-cd $dir
-source addhook.zsh
+#TODO: startup
+#cd assistant
+#../nailgun/ng ng-alias | grep lognew > /dev/null || nohup mvn exec:java&
 
-cd $olddir
