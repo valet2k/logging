@@ -23,11 +23,9 @@ Travis:
 * travis-ci.org builds the project automagically, and deploys artifacts to s3,
   if it builds successfully
 * builds can be retrieved from `https://s3.amazonaws.com/valet2k/builds/assistant-latest.jar`
-* TODO: update artifact on s3 if differs
 
 Developlment:
 * Can use any ide with maven integration
 * Need nailgun's snapshot version built and installed locally
   (`mvn clean install` in the repo (need `mvn` from installed maven on path))
-* TODO: make sure load pgreps for running assistant
 
