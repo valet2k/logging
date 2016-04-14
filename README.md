@@ -2,6 +2,7 @@
 [![Build Status](https://travis-ci.org/valet2k/logging.svg?branch=master)](https://travis-ci.org/valet2k/logging)
 
 * load.zsh - entry point for adding to shell - source in zshrc
+  TODO: actually start assistant from jar
 
 The assistant is a maven project that connects to a built-in derby server and
 specifies table config and provides nails to interact with the database and a
@@ -22,10 +23,25 @@ Nails:
 Travis:
 * travis-ci.org builds the project automagically, and deploys artifacts to s3,
   if it builds successfully
-* builds can be retrieved from `https://s3.amazonaws.com/valet2k/builds/assistant-latest.jar`
+* latest build can be retrieved from [s3](https://s3.amazonaws.com/valet2k/builds/assistant-latest.jar)
+* checksum also available at [s3](https://s3.amazonaws.com/valet2k/builds/assistant-latest.jar.sha512)
 
 Developlment:
-* Can use any ide with maven integration
+* Can use any ide with maven integration, or use maven directly
 * Need nailgun's snapshot version built and installed locally
-  (`mvn clean install` in the repo (need `mvn` from installed maven on path))
+
+With maven:
+* can get maven from [maven site](https://maven.apache.org/download.cgi)
+* put maven on path (exercise for reader)
+* have `JAVA_HOME` set to a jdk home (exercise for reader)
+* `mvn clean install` in the nailgun-git folder
+* can launch assistant with `mvn compile exec:java` in assistant folder
+
+With IDE:
+* launch install maven target for nailgun at least once
+* use run from ide or exec:java target for assistant from ide
+
+package task also needs jar-timestamp-normalize-maven-plugin from
+[a fork](github.com/automaticgiant/jar-timestamp-normalize-maven-plugin) until pr is
+merged upstream
 

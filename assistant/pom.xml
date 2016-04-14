@@ -26,6 +26,7 @@
                     <source>1.8</source>
                 </configuration>
             </plugin>
+            <!--this gives us an uber-jar, arguably better than distributing and using maven to get dependencies-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -37,6 +38,7 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <!--must exclude signatures because shading spoils them-->
                             <filters>
                                 <filter>
                                     <artifact>*:*</artifact>
@@ -47,6 +49,7 @@
                                     </excludes>
                                 </filter>
                             </filters>
+
                             <transformers>
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
@@ -63,7 +66,8 @@
                     </execution>
                 </executions>
             </plugin>
-            <!--if needing package goal, clone and install https://github.com/manouti/jar-timestamp-normalize-maven-plugin.git-->
+            <!--if needing package goal, clone and install https://github.com/automaticgiant/jar-timestamp-normalize-maven-plugin.git-->
+            <!--this gives us reproducible artifact checksums-->
             <plugin>
                 <groupId>com.github.manouti</groupId>
                 <artifactId>jar-timestamp-normalize-maven-plugin</artifactId>
@@ -86,11 +90,14 @@
     </properties>
 
     <dependencies>
+        <!--for rpc-->
         <dependency>
             <groupId>com.martiansoftware</groupId>
             <artifactId>nailgun-server</artifactId>
             <version>0.9.2-SNAPSHOT</version>
         </dependency>
+
+        <!--for ml-->
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-mllib_2.10</artifactId>
@@ -101,6 +108,8 @@
             <artifactId>spark-sql_2.10</artifactId>
             <version>1.6.1</version>
         </dependency>
+
+        <!--between these three, we have enough to have embedded server and still connect with outside client-->
         <dependency>
             <groupId>org.apache.derby</groupId>
             <artifactId>derbynet</artifactId>
