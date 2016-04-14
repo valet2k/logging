@@ -75,16 +75,6 @@ public class Core {
             e.printStackTrace();
         }
 
-//        do {
-//            try {
-//                logger.trace("connecting...");
-//                server.ping();
-//            } catch (Exception exception) {
-//                Thread.sleep(10);
-//                continue;
-//            }
-//        } while (false);
-
         //client
         pool = new adp();
 
