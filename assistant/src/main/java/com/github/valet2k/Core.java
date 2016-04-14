@@ -1,7 +1,6 @@
 package com.github.valet2k;
 
 import com.github.valet2k.columns.LastCommand;
-import com.github.valet2k.columns.Typeset;
 import com.github.valet2k.columns.WorkingDirectory;
 import com.github.valet2k.nails.HistoryLogger;
 import com.github.valet2k.nails.HistoryML;
@@ -115,7 +114,7 @@ public class Core {
             // explicit now, modular later
             LastCommand.init(connection);
             WorkingDirectory.init(connection);
-            Typeset.init(connection);
+//            Typeset.init(connection);
             connection.close();
         } catch (SQLException e) {
             e.printStackTrace();

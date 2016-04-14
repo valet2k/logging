@@ -2,7 +2,6 @@ package com.github.valet2k.nails;
 
 import com.github.valet2k.Core;
 import com.github.valet2k.columns.LastCommand;
-import com.github.valet2k.columns.Typeset;
 import com.github.valet2k.columns.WorkingDirectory;
 import com.martiansoftware.nailgun.Alias;
 import com.martiansoftware.nailgun.NGContext;
@@ -33,7 +32,7 @@ public class HistoryLogger {
             // can convert to modular iteration later
             LastCommand.update(connection, ctx, index);
             WorkingDirectory.update(connection, ctx, index);
-            Typeset.update(connection, ctx, index);
+//            Typeset.update(connection, ctx, index);
             // others here
             connection.close();
         } catch (SQLException e) {
