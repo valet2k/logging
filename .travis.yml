@@ -1,7 +1,8 @@
 language: java
 jdk: oraclejdk8
 install:
-- git clone https://github.com/manouti/jar-timestamp-normalize-maven-plugin.git norm && cd norm && mvn install && cd ..
+  #- git clone https://github.com/manouti/jar-timestamp-normalize-maven-plugin.git norm && cd norm && mvn install && cd ..
+- git clone https://github.com/automaticgiant/jar-timestamp-normalize-maven-plugin.git norm && cd norm && mvn install && cd ..
 - cd nailgun-git/nailgun-server && mvn install -Dmaven.javadoc.skip=true && cd ../../
 script:
 - cd assistant && mvn package && cd ..
