@@ -26,6 +26,12 @@ Travis:
 * latest build can be retrieved from [s3](https://s3.amazonaws.com/valet2k/builds/assistant-latest.jar)
 * checksum also available at [s3](https://s3.amazonaws.com/valet2k/builds/assistant-latest.jar.sha512)
 
+User installation:
+* clone this repo
+* download latest build jar into assistant project folder under repo root
+* launch in assistant folder (not more than one at a time)
+* source load.zsh to add rpc and hooks
+
 Developlment:
 * Can use any ide with maven integration, or use maven directly
 * Need nailgun's snapshot version built and installed locally
@@ -38,7 +44,7 @@ With maven:
 * can launch assistant with `mvn compile exec:java` in assistant folder
 
 With IDE:
-* launch install maven target for nailgun at least once
+* launch install maven target for `nailgun` at least once
 * use run from ide or exec:java target for assistant from ide
 
 package task also needs jar-timestamp-normalize-maven-plugin from

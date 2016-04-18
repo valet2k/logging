@@ -1,11 +1,13 @@
 language: java
 jdk: oraclejdk8
 install:
+  # this currently missing a bugfix, but should be returned to original author when pr merged
   #- git clone https://github.com/manouti/jar-timestamp-normalize-maven-plugin.git norm && cd norm && mvn install && cd ..
-- git clone https://github.com/automaticgiant/jar-timestamp-normalize-maven-plugin.git norm && cd norm && mvn install && cd ..
-- cd nailgun-git/nailgun-server && mvn install -Dmaven.javadoc.skip=true && cd ../../
+- (git clone https://github.com/automaticgiant/jar-timestamp-normalize-maven-plugin.git norm && cd norm && mvn install)
+- (cd nailgun-git/nailgun-server && mvn install -Dmaven.javadoc.skip=true)
 script:
-- cd assistant && mvn package && cd ..
+- (cd assistant && mvn package)
+- sh test.sh
 before_deploy:
 - sh before_deploy.sh
 deploy:
