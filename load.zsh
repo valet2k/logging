@@ -1,19 +1,23 @@
 #!/usr/bin/env zsh
 
-valet2k_repo=$(dirname "$(readlink -e "$0")")
-lastpwd=$PWD
 
+if [[ ! -p ~/.v2k_suggestion_pipe ]]; then
+    mkfifo ~/.v2k_suggestion_pipe
+fi
+
+export valet2k_repo=$(dirname "$(readlink -e "$0")")
 make -C $valet2k_repo/nailgun-git ng
 export valet2k_ng=$valet2k_repo/nailgun-git/ng
+echo "Entering Valet 2000"
 
-autoload add-zsh-hook
-add-zsh-hook -d precmd log
-function log(){
-  #get detailed env and send last history line as args
-  typeset | $valet2k_ng lognew $(fc -ln -1)
-}
-add-zsh-hook precmd log
+socket_name=v2kcom
+# shorthand
+tm="tmux -L $socket_name"
 
-#TODO: startup
-#../nailgun/ng ng-alias | grep lognew > /dev/null || nohup mvn exec:java&
-
+${=tm} new-session -d -s user #"zsh zsh_hook.sh)\'; zsh -i"
+#$tm new-window -d -t user -n user
+${=tm} split-window -dl 11 -t user:0.0 "while true; do cat ~/.v2k_suggestion_pipe; done"
+${=tm} send-keys -t user:0.0 "source ${valet2k_repo}/v2k-init/suggestions.zsh;
+source ${valet2k_repo}/v2k-init/create-suggestions.zsh;
+source ${valet2k_repo}/v2k-init/logging.zsh" C-m
+${=tm} attach -t user
