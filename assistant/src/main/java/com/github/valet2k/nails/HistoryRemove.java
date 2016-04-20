@@ -6,6 +6,8 @@ import com.martiansoftware.nailgun.NGContext;
 
 import java.sql.*;
 
+import static com.github.valet2k.Core.TABLE_NAME;
+
 /**
  * Created by automaticgiant on 4/6/16.
  */
@@ -16,7 +18,7 @@ public class HistoryRemove {
         Connection connection = null;
         try {
             connection = Core.pool.getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM VALET2K_HISTORY WHERE ID=?");
+            PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM " + TABLE_NAME + " WHERE ID=?");
             preparedStatement.setInt(1, Integer.parseInt(ctx.getArgs()[0]));
             preparedStatement.execute();
             connection.close();

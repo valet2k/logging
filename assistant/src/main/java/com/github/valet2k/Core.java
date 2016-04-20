@@ -1,7 +1,6 @@
 package com.github.valet2k;
 
 import com.github.valet2k.columns.LastCommand;
-import com.github.valet2k.columns.Typeset;
 import com.github.valet2k.columns.WorkingDirectory;
 import com.github.valet2k.nails.HistoryLogger;
 import com.github.valet2k.nails.HistoryML;
@@ -27,7 +26,8 @@ import java.util.Properties;
 
 public class Core {
     private static final Logger logger = LogManager.getLogger(Core.class);
-    public static final String DB_URL = "jdbc:derby:history;create=true";
+    public static final String TABLE_NAME = "valet2k_history";
+    public static final String DB_URL = "jdbc:derby:" + TABLE_NAME + ";create=true";
 
     private static NGServer ngServer;
     public static AliasManager aliasManager;
@@ -91,7 +91,7 @@ public class Core {
         SparkConf conf = new SparkConf().setAppName("valet").setMaster("local");
         JavaSparkContext sc = new JavaSparkContext(conf);
         SQLContext sq = new SQLContext(sc);
-        df = sq.read().jdbc(DB_URL, "valet2k_history", new Properties());
+        df = sq.read().jdbc(DB_URL, TABLE_NAME, new Properties());
 
         logger.info("Starting Nailgun RPC");
         ngServer.run();
@@ -104,7 +104,7 @@ public class Core {
             Connection connection = pool.getConnection();
             try {
                 connection.createStatement().execute(
-                        "CREATE TABLE valet2k_history ( " +
+                        "CREATE TABLE " + TABLE_NAME + " ( " +
                                 "id INT NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1), " +
                                 "PRIMARY KEY (id) )");
             } catch (SQLException e) {
@@ -114,7 +114,7 @@ public class Core {
             // explicit now, modular later
             LastCommand.init(connection);
             WorkingDirectory.init(connection);
-            Typeset.init(connection);
+//            Typeset.init(connection);
             connection.close();
         } catch (SQLException e) {
             e.printStackTrace();
