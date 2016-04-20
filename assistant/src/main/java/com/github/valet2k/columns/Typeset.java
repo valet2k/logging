@@ -13,21 +13,22 @@ import static com.github.valet2k.Core.TABLE_NAME;
 /**
  * Created by automaticgiant on 4/6/16.
  */
-public class Typeset {
+public class Typeset implements LoggingColumn {
     private static final Logger logger;
     private static final Pattern pipestatus = Pattern.compile("^array pipestatus=\\((.*)\\)$");
     static final String COLUMN_NAME = "typeset";
-    private static boolean initDone = false;
+    private boolean initDone = false;
 
     static {
         logger = LogManager.getLogger(Typeset.class);
         logger.trace("Typeset loaded");
     }
 
-    public static void init(Connection con) throws SQLException {
+    public boolean init(Connection con) throws SQLException {
+        if (initDone) return true;
         try {
             Statement statement = con.createStatement();
-            ResultSetMetaData metadata = statement.executeQuery("select " + COLUMN_NAME + " from " + Core.TABLE_NAME).getMetaData();
+            ResultSetMetaData metadata = statement.executeQuery("SELECT " + COLUMN_NAME + " FROM " + Core.TABLE_NAME).getMetaData();
             if (metadata.getColumnCount() < 1) {
                 //not created yet
                 statement.execute("ALTER TABLE " + TABLE_NAME + " ADD " + COLUMN_NAME + " CLOB");
@@ -37,10 +38,10 @@ public class Typeset {
                 case Types.LONGVARCHAR:
                     //convert to clob
                     con.setAutoCommit(false);
-                    statement.execute("alter table " + TABLE_NAME + " ADD column tmp" + COLUMN_NAME + " CLOB");
-                    statement.execute("update " + TABLE_NAME + " set tmp" + COLUMN_NAME + "=" + COLUMN_NAME);
-                    statement.execute("alter table " + TABLE_NAME + " drop COLUMN " + COLUMN_NAME);
-                    statement.execute("rename column " + TABLE_NAME + ".tmp" + COLUMN_NAME + " TO " + COLUMN_NAME);
+                    statement.execute("ALTER TABLE " + TABLE_NAME + " ADD COLUMN tmp" + COLUMN_NAME + " CLOB");
+                    statement.execute("UPDATE " + TABLE_NAME + " SET tmp" + COLUMN_NAME + "=" + COLUMN_NAME);
+                    statement.execute("ALTER TABLE " + TABLE_NAME + " DROP COLUMN " + COLUMN_NAME);
+                    statement.execute("RENAME COLUMN " + TABLE_NAME + ".tmp" + COLUMN_NAME + " TO " + COLUMN_NAME);
                     con.commit();
                     con.setAutoCommit(true);
                     break;
@@ -52,14 +53,14 @@ public class Typeset {
                     throw new SQLException("couldn't convert " + COLUMN_NAME);
             }
 //            statement.execute("ALTER TABLE " + TABLE_NAME + " ADD pipestatus varchar(32672)");
+            initDone = true;
         } catch (SQLException e) {
-                logger.error("error while specifying column. error code: " + e.getErrorCode() + ", state: " + e.getSQLState(), e);
+            logger.error("error while specifying column. error code: " + e.getErrorCode() + ", state: " + e.getSQLState(), e);
         }
-        initDone = true;
+        return initDone;
     }
 
-    public static void update(Connection con, NGContext ctx, int index) throws SQLException {
-        if (!initDone) return;
+    public boolean update(Connection con, NGContext ctx, int index) throws SQLException {
         PreparedStatement updateStatement;
         try {
             updateStatement = con.prepareStatement("UPDATE " + TABLE_NAME + " SET " + COLUMN_NAME + "=? WHERE id=?");
@@ -71,6 +72,13 @@ public class Typeset {
             updateStatement.executeUpdate();
         } catch (Exception e) {
             logger.error(e);
+            return false;
         }
+        return true;
+    }
+
+    @Override
+    public String getColumnName() {
+        return COLUMN_NAME;
     }
 }

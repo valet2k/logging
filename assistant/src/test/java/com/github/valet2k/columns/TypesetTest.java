@@ -20,6 +20,7 @@ import static com.github.valet2k.Core.TABLE_NAME;
 public class TypesetTest {
 
     private static Connection conn;
+    Typeset article = new Typeset();
 
     @org.junit.Before
     public void beforeClass() throws Exception {
@@ -30,7 +31,7 @@ public class TypesetTest {
     @org.junit.Test
     public void testUpdate() throws Exception {
         Core.tryCreateTable(conn);
-        Typeset.init(conn);
+        article.init(conn);
         checkInsert();
     }
 
@@ -38,7 +39,7 @@ public class TypesetTest {
     public void testSchemaChangesVarcharToClob() throws Exception {
         Core.tryCreateTable(conn);
         conn.createStatement().execute("ALTER TABLE " + TABLE_NAME + " ADD " + Typeset.COLUMN_NAME + " VARCHAR(12345)");
-        Typeset.init(conn);
+        article.init(conn);
         checkInsert();
     }
 
@@ -48,7 +49,7 @@ public class TypesetTest {
         NGContext ctx = new NGContext();
         ctx.in = new ByteArrayInputStream(expected.getBytes());
         ctx.in.reset();
-        Typeset.update(conn, ctx, 1);
+        article.update(conn, ctx, 1);
         ResultSet resultSet = conn.createStatement().executeQuery("SELECT * FROM " + Core.TABLE_NAME);
         resultSet.next();
         String typeset = resultSet.getString(Typeset.COLUMN_NAME);
