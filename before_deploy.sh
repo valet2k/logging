@@ -1,5 +1,6 @@
 #!/bin/sh
-jarname=assistant-latest.jar
+test "$TRAVIS_BRANCH" = master && branch=latest
+jarname=assistant-"$branch".jar
 s3=https://s3.amazonaws.com/valet2k/builds/
 mkdir deploy
 mv assistant/target/assistant*normalized.jar deploy/$jarname
