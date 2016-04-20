@@ -1,6 +1,7 @@
 package com.github.valet2k;
 
 import com.github.valet2k.columns.LastCommand;
+import com.github.valet2k.columns.Typeset;
 import com.github.valet2k.columns.WorkingDirectory;
 import com.github.valet2k.nails.HistoryLogger;
 import com.github.valet2k.nails.HistoryML;
@@ -102,23 +103,27 @@ public class Core {
     private static void db_init() {
         try {
             Connection connection = pool.getConnection();
-            try {
-                connection.createStatement().execute(
-                        "CREATE TABLE " + TABLE_NAME + " ( " +
-                                "id INT NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1), " +
-                                "PRIMARY KEY (id) )");
-            } catch (SQLException e) {
-                if (!(e.getErrorCode() == 30000 && e.getSQLState().equals("X0Y32"))) // response from already created
-                    logger.warn("couldn't create table:" + e.getErrorCode() + ":" + e.getSQLState(), e);
-            }
+            tryCreateTable(connection);
             // explicit now, modular later
             LastCommand.init(connection);
             WorkingDirectory.init(connection);
-//            Typeset.init(connection);
+            Typeset.init(connection);
             connection.close();
         } catch (SQLException e) {
             e.printStackTrace();
             System.err.println("database error on db_init:" + e.getErrorCode() + ":" + e.getSQLState());
+        }
+    }
+
+    public static void tryCreateTable(Connection connection) {
+        try {
+            connection.createStatement().execute(
+                    "CREATE TABLE " + TABLE_NAME + " ( " +
+                            "id INT NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1), " +
+                            "PRIMARY KEY (id) )");
+        } catch (SQLException e) {
+            if (!(e.getErrorCode() == 30000 && e.getSQLState().equals("X0Y32"))) // response from already created
+                logger.warn("couldn't create table:" + e.getErrorCode() + ":" + e.getSQLState(), e);
         }
     }
 }
