@@ -26,13 +26,14 @@ public class Typeset implements LoggingColumn {
 
     public boolean init(Connection con) throws SQLException {
         if (initDone) return true;
+        Statement statement = null;
         try {
-            Statement statement = con.createStatement();
+            statement = con.createStatement();
             ResultSetMetaData metadata = statement.executeQuery("SELECT " + COLUMN_NAME + " FROM " + Core.TABLE_NAME).getMetaData();
-            if (metadata.getColumnCount() < 1) {
-                //not created yet
-                statement.execute("ALTER TABLE " + TABLE_NAME + " ADD " + COLUMN_NAME + " CLOB");
-            }
+//            if (metadata.getColumnCount() < 1) {
+//                not created yet
+//                statement.execute("ALTER TABLE " + TABLE_NAME + " ADD " + COLUMN_NAME + " CLOB");
+//            }
             switch (metadata.getColumnType(1)) {
                 case Types.VARCHAR:
                 case Types.LONGVARCHAR:
@@ -55,6 +56,11 @@ public class Typeset implements LoggingColumn {
 //            statement.execute("ALTER TABLE " + TABLE_NAME + " ADD pipestatus varchar(32672)");
             initDone = true;
         } catch (SQLException e) {
+            if (e.getSQLState().equals("42X04") && e.getErrorCode() == 30000) {
+                statement.execute("ALTER TABLE " + TABLE_NAME + " ADD " + COLUMN_NAME + " CLOB");
+                initDone = true;
+                return initDone;
+            }
             logger.error("error while specifying column. error code: " + e.getErrorCode() + ", state: " + e.getSQLState(), e);
         }
         return initDone;
@@ -71,7 +77,7 @@ public class Typeset implements LoggingColumn {
             updateStatement.setInt(2, index);
             updateStatement.executeUpdate();
         } catch (Exception e) {
-            logger.error(e);
+            logger.error("couldn't do update", e);
             return false;
         }
         return true;

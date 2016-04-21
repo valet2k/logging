@@ -24,7 +24,7 @@ public interface LoggingColumn {
         } catch (SQLException e) {
             // ok
             getLogger().error("couldn't create simple column " + getColumnName());
-            throw e;
+//            throw e;
         }
         return false;
     }
@@ -34,7 +34,7 @@ public interface LoggingColumn {
     String getColumnName();
 
     default String getPrecision() {
-        return null;
+        return "";
     }
     default String getType(){return "VARCHAR";}
 }

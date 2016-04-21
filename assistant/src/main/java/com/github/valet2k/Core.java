@@ -3,6 +3,7 @@ package com.github.valet2k;
 import com.github.valet2k.columns.LastCommand;
 import com.github.valet2k.columns.LoggingColumn;
 import com.github.valet2k.columns.Typeset;
+import com.github.valet2k.columns.WorkingDirectory;
 import com.github.valet2k.nails.HistoryLogger;
 import com.github.valet2k.nails.HistoryML;
 import com.github.valet2k.nails.HistoryRemove;
@@ -41,7 +42,8 @@ public class Core {
 
     public static ClientDataSource pool;
     public static DataFrame df;
-    private static final List<LoggingColumn> columns = Lists.newArrayList(new Typeset(), new LastCommand());
+    private static final List<LoggingColumn> columns = Lists.newArrayList(new Typeset(), new LastCommand(), new WorkingDirectory());
+    public static SQLContext sq;
 
     public static List<LoggingColumn> getColumns() {
         return columns;
@@ -113,7 +115,7 @@ public class Core {
         // TODO: move to ml module, and async
         SparkConf conf = new SparkConf().setAppName("valet").setMaster("local");
         JavaSparkContext sc = new JavaSparkContext(conf);
-        SQLContext sq = new SQLContext(sc);
+        sq = new SQLContext(sc);
         df = sq.read().jdbc(DB_URL, TABLE_NAME, new Properties());
 
         logger.info("Starting Nailgun RPC");
