@@ -1,10 +1,10 @@
 package com.github.valet2k.nails;
 
 import com.github.valet2k.Core;
-import com.github.valet2k.columns.LastCommand;
-import com.github.valet2k.columns.WorkingDirectory;
 import com.martiansoftware.nailgun.Alias;
 import com.martiansoftware.nailgun.NGContext;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -18,22 +18,24 @@ import static com.github.valet2k.Core.TABLE_NAME;
  */
 public class HistoryLogger {
     public static final Alias LOGNEW = new Alias("lognew", "Add entry to history - should have env/typeset piped into stdin, and command line as arguments.", HistoryLogger.class);
+    private static final Logger logger = LogManager.getLogger(HistoryLogger.class);
 
     // nailgun's contract
     public static void nailMain(NGContext ctx) {
-        Connection connection = null;
         try {
-            connection = Core.pool.getConnection();
+            final Connection connection = Core.pool.getConnection();
             Statement statement = connection.createStatement();
             statement.execute("INSERT into " + TABLE_NAME + " (id) VALUES (default)", Statement.RETURN_GENERATED_KEYS);
             ResultSet generatedKeys = statement.getGeneratedKeys();
             generatedKeys.next();
             int index = generatedKeys.getInt(1);
-            // can convert to modular iteration later
-            LastCommand.update(connection, ctx, index);
-            WorkingDirectory.update(connection, ctx, index);
-//            Typeset.update(connection, ctx, index);
-            // others here
+            Core.getColumns().forEach(column -> {
+                try {
+                    column.update(connection, ctx, index);
+                } catch (SQLException e) {
+                    logger.error("couldn't log " + column, e);
+                }
+            });
             connection.close();
         } catch (SQLException e) {
             e.printStackTrace();

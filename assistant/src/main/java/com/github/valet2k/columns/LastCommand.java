@@ -12,20 +12,28 @@ import static com.github.valet2k.Core.TABLE_NAME;
 /**
  * Created by automaticgiant on 4/6/16.
  */
-public class LastCommand {
-    public static void init(Connection con) throws SQLException {
+public class LastCommand implements LoggingColumn {
+    public boolean init(Connection con) throws SQLException {
         try {
             Statement statement = con.createStatement();
-            statement.execute("ALTER TABLE " + TABLE_NAME + " ADD LastCommand VARCHAR(32672)");
+            statement.execute("ALTER TABLE " + TABLE_NAME + " ADD " + getColumnName() + " VARCHAR(32672)");
         } catch (SQLException e) {
-            // ok
+            getLogger().debug("potential init problem in "+getColumnName(), e);
         }
+        return true;
     }
 
-    public static void update(Connection con, NGContext ctx, int index) throws SQLException {
-        PreparedStatement updateStatement = con.prepareStatement("UPDATE " + TABLE_NAME + " SET LastCommand=? WHERE id=?");
+    public boolean update(Connection con, NGContext ctx, int index) throws SQLException {
+        PreparedStatement updateStatement = con.prepareStatement("UPDATE " + TABLE_NAME + " SET "+getColumnName()+"=? WHERE id=?");
+        //note: does not preserve separation of arg components like array
         updateStatement.setString(1, String.join(" ", ctx.getArgs()));
         updateStatement.setInt(2, index);
         updateStatement.executeUpdate();
+        return true;
+    }
+
+    @Override
+    public String getColumnName() {
+        return "LASTCOMMAND";
     }
 }

@@ -1,49 +1,84 @@
 package com.github.valet2k.columns;
 
+import com.github.valet2k.Core;
 import com.martiansoftware.nailgun.NGContext;
-import org.apache.commons.io.IOUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
+import java.util.regex.Pattern;
 
 import static com.github.valet2k.Core.TABLE_NAME;
 
 /**
  * Created by automaticgiant on 4/6/16.
  */
-public class Typeset {
+public class Typeset implements LoggingColumn {
     private static final Logger logger;
+    private static final Pattern pipestatus = Pattern.compile("^array pipestatus=\\((.*)\\)$");
+    static final String COLUMN_NAME = "typeset";
+    private boolean initDone = false;
 
     static {
         logger = LogManager.getLogger(Typeset.class);
         logger.trace("Typeset loaded");
     }
 
-    public static void init(Connection con) throws SQLException {
+    public boolean init(Connection con) throws SQLException {
+        if (initDone) return true;
         try {
             Statement statement = con.createStatement();
-            statement.execute("ALTER TABLE " + TABLE_NAME + " ADD Typeset VARCHAR(32672)");
+            ResultSetMetaData metadata = statement.executeQuery("SELECT " + COLUMN_NAME + " FROM " + Core.TABLE_NAME).getMetaData();
+            if (metadata.getColumnCount() < 1) {
+                //not created yet
+                statement.execute("ALTER TABLE " + TABLE_NAME + " ADD " + COLUMN_NAME + " CLOB");
+            }
+            switch (metadata.getColumnType(1)) {
+                case Types.VARCHAR:
+                case Types.LONGVARCHAR:
+                    //convert to clob
+                    con.setAutoCommit(false);
+                    statement.execute("ALTER TABLE " + TABLE_NAME + " ADD COLUMN tmp" + COLUMN_NAME + " CLOB");
+                    statement.execute("UPDATE " + TABLE_NAME + " SET tmp" + COLUMN_NAME + "=" + COLUMN_NAME);
+                    statement.execute("ALTER TABLE " + TABLE_NAME + " DROP COLUMN " + COLUMN_NAME);
+                    statement.execute("RENAME COLUMN " + TABLE_NAME + ".tmp" + COLUMN_NAME + " TO " + COLUMN_NAME);
+                    con.commit();
+                    con.setAutoCommit(true);
+                    break;
+                case Types.CLOB:
+                    //can test precision
+//            if (metadata.getPrecision())
+                    break;
+                default:
+                    throw new SQLException("couldn't convert " + COLUMN_NAME);
+            }
+//            statement.execute("ALTER TABLE " + TABLE_NAME + " ADD pipestatus varchar(32672)");
+            initDone = true;
         } catch (SQLException e) {
-            if (!(e.getSQLState().equals("X0Y32") && e.getErrorCode() == 30000))
-                logger.warn("couldn't add column for typeset, error code: " + e.getErrorCode() + ", state: " + e.getSQLState(), e);
+            logger.error("error while specifying column. error code: " + e.getErrorCode() + ", state: " + e.getSQLState(), e);
         }
+        return initDone;
     }
 
-    public static void update(Connection con, NGContext ctx, int index) throws SQLException {
+    public boolean update(Connection con, NGContext ctx, int index) throws SQLException {
         PreparedStatement updateStatement;
         try {
-            updateStatement = con.prepareStatement("UPDATE " + TABLE_NAME + " SET Typeset=? WHERE id=?");
-            updateStatement.setString(1, IOUtils.toString(ctx.in));
+            updateStatement = con.prepareStatement("UPDATE " + TABLE_NAME + " SET " + COLUMN_NAME + "=? WHERE id=?");
+//            String group = pipestatus.matcher(typeset).group();
+//            if (group != null)
+            updateStatement.setAsciiStream(1, ctx.in);
+
             updateStatement.setInt(2, index);
             updateStatement.executeUpdate();
-        } catch (IOException e) {
-            System.err.println(e);
-            e.printStackTrace();
+        } catch (Exception e) {
+            logger.error(e);
+            return false;
         }
+        return true;
+    }
+
+    @Override
+    public String getColumnName() {
+        return COLUMN_NAME;
     }
 }

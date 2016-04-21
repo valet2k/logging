@@ -1,13 +1,17 @@
 language: java
 jdk: oraclejdk8
+before_install:
+  - sudo apt-get -qq -y install zsh
 install:
+  # this currently missing a bugfix, but should be returned to original author when pr merged
   #- git clone https://github.com/manouti/jar-timestamp-normalize-maven-plugin.git norm && cd norm && mvn install && cd ..
-- git clone https://github.com/automaticgiant/jar-timestamp-normalize-maven-plugin.git norm && cd norm && mvn install && cd ..
-- cd nailgun-git/nailgun-server && mvn install -Dmaven.javadoc.skip=true && cd ../../
+  - (git clone https://github.com/automaticgiant/jar-timestamp-normalize-maven-plugin.git norm && cd norm && mvn -T 2 install)
+  - (cd nailgun-git/nailgun-server && mvn -T 2 install -Dmaven.javadoc.skip=true)
 script:
-- cd assistant && mvn package && cd ..
+  - (cd assistant && mvn -T 2 package)
+  - (zsh test.zsh)
 before_deploy:
-- sh before_deploy.sh
+  - sh before_deploy.sh
 deploy:
   skip_cleanup: true
   provider: s3

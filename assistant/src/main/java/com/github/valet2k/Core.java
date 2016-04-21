@@ -1,11 +1,13 @@
 package com.github.valet2k;
 
 import com.github.valet2k.columns.LastCommand;
-import com.github.valet2k.columns.WorkingDirectory;
+import com.github.valet2k.columns.LoggingColumn;
+import com.github.valet2k.columns.Typeset;
 import com.github.valet2k.nails.HistoryLogger;
 import com.github.valet2k.nails.HistoryML;
 import com.github.valet2k.nails.HistoryRemove;
 import com.github.valet2k.nails.HistoryShow;
+import com.google.common.collect.Lists;
 import com.martiansoftware.nailgun.AliasManager;
 import com.martiansoftware.nailgun.NGServer;
 import org.apache.derby.jdbc.ClientConnectionPoolDataSource;
@@ -22,6 +24,7 @@ import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Properties;
 
 public class Core {
@@ -38,6 +41,11 @@ public class Core {
 
     public static ClientDataSource pool;
     public static DataFrame df;
+    private static final List<LoggingColumn> columns = Lists.newArrayList(new Typeset(), new LastCommand());
+
+    public static List<LoggingColumn> getColumns() {
+        return columns;
+    }
 
     static class adp extends ClientConnectionPoolDataSource {
         @Override
@@ -80,7 +88,22 @@ public class Core {
 
         logger.trace("specifying columns");
         try {
-            db_init();
+            try {
+                Connection connection = pool.getConnection();
+                tryCreateTable(connection);
+                getColumns().forEach(column -> {
+                    try {
+                        column.init(connection);
+                    } catch (SQLException e) {
+                        logger.error("couldn't init " + column, e);
+                        getColumns().remove(column);
+                    }
+                });
+                connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+                System.err.println("database error on db_init:" + e.getErrorCode() + ":" + e.getSQLState());
+            }
         } catch (Exception e) {
             logger.error("db_init failed - quitting");
             pool.setShutdownDatabase("true");
@@ -99,26 +122,15 @@ public class Core {
         pool.setShutdownDatabase("true");
     }
 
-    private static void db_init() {
+    public static void tryCreateTable(Connection connection) {
         try {
-            Connection connection = pool.getConnection();
-            try {
-                connection.createStatement().execute(
-                        "CREATE TABLE " + TABLE_NAME + " ( " +
-                                "id INT NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1), " +
-                                "PRIMARY KEY (id) )");
-            } catch (SQLException e) {
-                if (!(e.getErrorCode() == 30000 && e.getSQLState().equals("X0Y32"))) // response from already created
-                    logger.warn("couldn't create table:" + e.getErrorCode() + ":" + e.getSQLState(), e);
-            }
-            // explicit now, modular later
-            LastCommand.init(connection);
-            WorkingDirectory.init(connection);
-//            Typeset.init(connection);
-            connection.close();
+            connection.createStatement().execute(
+                    "CREATE TABLE " + TABLE_NAME + " ( " +
+                            "id INT NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1), " +
+                            "PRIMARY KEY (id) )");
         } catch (SQLException e) {
-            e.printStackTrace();
-            System.err.println("database error on db_init:" + e.getErrorCode() + ":" + e.getSQLState());
+            if (!(e.getErrorCode() == 30000 && e.getSQLState().equals("X0Y32"))) // response from already created
+                logger.warn("couldn't create table:" + e.getErrorCode() + ":" + e.getSQLState(), e);
         }
     }
 }
