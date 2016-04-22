@@ -1,6 +1,8 @@
 # logging
 [![Build Status](https://travis-ci.org/valet2k/logging.svg?branch=master)](https://travis-ci.org/valet2k/logging)
 
+_pls be involved with [issues](https://github.com/valet2k/logging/issues)_
+
 ##Entry Point
 * load.zsh - entry point for adding to shell - source in zshrc
   TODO: actually start assistant from jar
@@ -97,3 +99,4 @@ log entries with explanatory dimensions.
 There is a windows bug [pipestatus parsing - #9](https://github.com/valet2k/logging/issues/9)
 presently with babun/zsh storing/displaying pipestatus differently, so the model
 will not get labels to train on.
+
