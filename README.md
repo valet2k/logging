@@ -49,6 +49,8 @@ for more info.
 * travis configuration is [.travis.yml](./.travis.yml)
 * runs [before_deploy.sh](./before_deploy.sh) if build is successful from master
   to prepare artifacts for publishing to s3 (example of checksum update check)
+* can skip build (for documentation change for example) by adding [ci skip]
+  anywhere in commit message
 
 ###With maven:
 * can get maven from [maven site](https://maven.apache.org/download.cgi)
