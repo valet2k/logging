@@ -113,7 +113,7 @@ public class Core {
         }
 
         // TODO: move to ml module, and async
-        SparkConf conf = new SparkConf().setAppName("valet").setMaster("local");
+        SparkConf conf = new SparkConf().setAppName("valet").setMaster("local[3]");
         JavaSparkContext sc = new JavaSparkContext(conf);
         sq = new SQLContext(sc);
         df = sq.read().jdbc(DB_URL, TABLE_NAME, new Properties());
