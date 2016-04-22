@@ -72,11 +72,11 @@ public class HistoryMLTest implements Serializable {
         df = df.withColumn("ps", functions.callUDF("ps", df.col(TYPESET)));
         df = df.select("label", "ps", TYPESET);
         Row[] collect = df.collect();
-        df.show();
-        assert collect[0].getDouble(1) > 0;
-        assert collect[1].getDouble(1) < 0;
-        assert collect[2].getDouble(1) == 0;
-        assert collect[3].getDouble(1) == 0;
+//        df.show();
+        assert collect[0].getDouble(0) > 0;
+        assert collect[1].getDouble(0) < 0;
+        assert collect[2].getDouble(0) == 0;
+        assert collect[3].getDouble(0) == 0;
         df.show();
         Stream.of(df.collect()).map(Row::toString).forEach(System.out::println);
     }
