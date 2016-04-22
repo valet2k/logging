@@ -118,6 +118,8 @@ public class Core {
         sq = new SQLContext(sc);
         df = sq.read().jdbc(DB_URL, TABLE_NAME, new Properties());
 
+        HistoryML.initUDFs(sq);
+
         logger.info("Starting Nailgun RPC");
         ngServer.run();
         logger.info("Shutting down");

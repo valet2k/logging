@@ -12,6 +12,7 @@ import org.apache.spark.ml.feature.VectorAssembler;
 import org.apache.spark.ml.regression.DecisionTreeRegressionModel;
 import org.apache.spark.ml.regression.DecisionTreeRegressor;
 import org.apache.spark.sql.DataFrame;
+import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.functions;
 import org.apache.spark.sql.types.DataTypes;
@@ -20,7 +21,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import static com.github.valet2k.Core.sq;
 import static org.apache.spark.sql.functions.*;
 
 /**
@@ -36,9 +36,9 @@ public class HistoryML {
     public static final String PSE = "pse";
     public static final String TYPESET = "TYPESET";
     public static final String PREDICTED = "PREDICTED";
-    private static final String LABEL = "LABEL";
+    public static final String LABEL = "LABEL";
     public static final Pattern PIPESTATUS_PATTERN = Pattern.compile("^array pipestatus=\\( ?(([0-9]{1,3} ?)+)\\)$", Pattern.MULTILINE);
-    private static final String PSLE = "PSLE";
+    public static final String PSLE = "PSLE";
     private static final String PIPESTATUS = "PIPESTATUS";
 
     public static DataFrame extractFeatures(DataFrame df) {
@@ -101,7 +101,7 @@ public class HistoryML {
         return df;
     }
 
-    public static DataFrame getLabeledPoints(DataFrame df) {
+    public static void initUDFs(SQLContext sq) {
         sq.udf().register(PSLE, new UDF1<String, Double>() {
             @Override
             public Double call(String s) throws Exception {
@@ -114,6 +114,9 @@ public class HistoryML {
                 return pipestatusFromTypeset(s);
             }
         }, DataTypes.StringType);
+    }
+
+    public static DataFrame getLabeledPoints(DataFrame df) {
 
         //create and label training set
         //apply pse to all - tolerates none found with 0, but should throw out
