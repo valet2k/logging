@@ -37,16 +37,17 @@ public class HistoryML {
     public static final String TYPESET = "TYPESET";
     public static final String PREDICTED = "PREDICTED";
     private static final String LABEL = "LABEL";
-    public static final Pattern PIPESTATUS_PATTERN = Pattern.compile("^array pipestatus=\\( (([0-9]{1,3} )+)\\)$", Pattern.MULTILINE);
+    public static final Pattern PIPESTATUS_PATTERN = Pattern.compile("^array pipestatus=\\( ?(([0-9]{1,3} ?)+)\\)$", Pattern.MULTILINE);
     private static final String PSLE = "PSLE";
     private static final String PIPESTATUS = "PIPESTATUS";
 
-    public static void nailMain(NGContext ctx) {
-        DataFrame df = Core.df;
-
-        //textbook tf-idf - idf will produce sparse vectors
+    public static DataFrame extractFeatures(DataFrame df) {
 //      remove nulls so avoid NPE, replace with empties so can use the points
         df = df.withColumn(LASTCOMMAND, when(functions.col(LASTCOMMAND).isNull(), lit("")).otherwise(functions.col(LASTCOMMAND)));
+        df = df.withColumn(WORKINGDIRECTORY, when(functions.col(WORKINGDIRECTORY).isNull(), lit("")).otherwise(functions.col(WORKINGDIRECTORY)));
+        //alternative is to drop rows with missing columns - probably better
+
+        //textbook tf-idf - idf will produce sparse vectors
         RegexTokenizer regexTokenizer1 = new RegexTokenizer()
                 .setGaps(false)
                 .setPattern("[\\w.-]+")
@@ -63,7 +64,6 @@ public class HistoryML {
                 .setOutputCol(LASTCOMMAND + IDF);
 
 
-        df = df.withColumn(WORKINGDIRECTORY, when(functions.col(WORKINGDIRECTORY).isNull(), lit("")).otherwise(functions.col(WORKINGDIRECTORY)));
         RegexTokenizer regexTokenizer2 = new RegexTokenizer()
                 .setGaps(false)
                 .setPattern("[\\w.-]+")
@@ -98,12 +98,10 @@ public class HistoryML {
 
         df = assembler.transform(df);
 
+        return df;
+    }
 
-        DecisionTreeRegressor decisionTreeRegressor = new DecisionTreeRegressor()
-                .setFeaturesCol(FEATURES)
-                .setLabelCol(LABEL)
-                .setPredictionCol(PREDICTED);
-
+    public static DataFrame getLabeledPoints(DataFrame df) {
         sq.udf().register(PSLE, new UDF1<String, Double>() {
             @Override
             public Double call(String s) throws Exception {
@@ -121,21 +119,31 @@ public class HistoryML {
         //apply pse to all - tolerates none found with 0, but should throw out
         df = df.withColumn(LABEL, callUDF(PSLE, col(TYPESET)));
         DataFrame training = df.filter("LABEL != 0");
+        return df;
+    }
+
+    public static void nailMain(NGContext ctx) {
+        DataFrame df = extractFeatures(Core.df);
+
+        DecisionTreeRegressor decisionTreeRegressor = new DecisionTreeRegressor()
+                .setFeaturesCol(FEATURES)
+                .setLabelCol(LABEL)
+                .setPredictionCol(PREDICTED);
+
+        DataFrame training = getLabeledPoints(df);
+
         DecisionTreeRegressionModel fit = decisionTreeRegressor.fit(training);
 
-        //isolate exit status available
-        DataFrame test;// = df.except(training);
-        //jk - keep to compare label to prediction
-        test = df;
+        DataFrame test = df;
 
         DataFrame predicted = fit.transform(test);
 
         //annotate with pipestatus
-        predicted = predicted.withColumn(PIPESTATUS, callUDF(PSE, col(TYPESET)));
+//        predicted = predicted.withColumn(PIPESTATUS, callUDF(PSE, col(TYPESET)));
 
         // output format here!!
-        DataFrame results = predicted.select(LABEL, PREDICTED, PIPESTATUS, LASTCOMMAND, WORKINGDIRECTORY);
-        Stream.of(results.sort(functions.desc("ID")).head(ctx.getArgs().length > 0 ? Integer.parseInt(ctx.getArgs()[0]) : 10))
+        DataFrame results = predicted.select(LABEL, PREDICTED, /*PIPESTATUS,*/ LASTCOMMAND, WORKINGDIRECTORY);
+        Stream.of(results.sort(functions.desc(PREDICTED)).head(ctx.getArgs().length > 0 ? Integer.parseInt(ctx.getArgs()[0]) : 10))
                 .map(Object::toString)
                 .forEach(ctx.out::println);
         ctx.out.println(fit.toDebugString());
@@ -147,16 +155,19 @@ public class HistoryML {
         Matcher matcher = PIPESTATUS_PATTERN.matcher(s);
         try {
             matcher.find();
-            return matcher.group(1);
+            String group = matcher.group(1);
+            return group;
         } catch (IllegalStateException e) {
             return "";
         }
     }
-    public static Double labelFromTypeset(String t){
+
+    public static Double labelFromTypeset(String t) {
         return labelFromPipestatus(pipestatusFromTypeset(t));
     }
+
     public static Double labelFromPipestatus(String s) {
-        if (s==null || s.isEmpty()) return 0.0; // support for empty/null - throw out for training
+        if (s == null || s.isEmpty()) return 0.0; // support for empty/null - throw out for training
         String[] statuses = s.split(" ");
         return Stream.of(statuses).map(Integer::valueOf).anyMatch(integer -> !integer.equals(0)) ? -50.0 : 10.0;
     }
