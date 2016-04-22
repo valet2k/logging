@@ -11,6 +11,9 @@ The assistant is a maven project that connects to a built-in derby server and
 specifies table config and provides nails to interact with the database and a
 Spark data frame to pull data from. It's maven project folder is `assistant`.
 
+It should be running a single instance as long as you want it's services from
+multiple sessions.
+
 ##RPC
 nailgun is a commandline rpc interface to a long-running jvm. The assistant uses
 it to call in. The client should be handled by running make on a git-subtree
