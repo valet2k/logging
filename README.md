@@ -89,6 +89,6 @@ pipestatus, 0 for missing(can't get that info, probably due to null typeset
 column), and +10 for all zero. It displays `[n]` or 10 of the most highly rated
 log entries with explanatory dimensions.
 
-There is a windows bug (pipestatus parsing - #9)[#9] presently with babun/zsh
+There is a windows bug [pipestatus parsing - #9](#9) presently with babun/zsh
 storing/displaying pipestatus differently, so the model will not get labels to
 train on.
