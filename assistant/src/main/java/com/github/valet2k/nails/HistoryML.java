@@ -116,15 +116,6 @@ public class HistoryML {
         }, DataTypes.StringType);
     }
 
-    public static DataFrame getLabeledPoints(DataFrame df) {
-
-        //create and label training set
-        //apply pse to all - tolerates none found with 0, but should throw out
-        df = df.withColumn(LABEL, callUDF(PSLE, col(TYPESET)));
-        DataFrame training = df.filter("LABEL != 0");
-        return df;
-    }
-
     public static void nailMain(NGContext ctx) {
         DataFrame df = extractFeatures(Core.df);
 
@@ -133,19 +124,22 @@ public class HistoryML {
                 .setLabelCol(LABEL)
                 .setPredictionCol(PREDICTED);
 
-        DataFrame training = getLabeledPoints(df);
+        //create and label training set
+        //apply pse to all - tolerates none found with 0, but should throw out
+        df = df.withColumn(LABEL, callUDF(PSLE, col(TYPESET)));
+        DataFrame training = df.filter("LABEL != 0");
+        training.show();
 
         DecisionTreeRegressionModel fit = decisionTreeRegressor.fit(training);
 
-        DataFrame test = df;
-
-        DataFrame predicted = fit.transform(test);
+        DataFrame predicted = fit.transform(df);
+        predicted.show();
 
         //annotate with pipestatus
-//        predicted = predicted.withColumn(PIPESTATUS, callUDF(PSE, col(TYPESET)));
+        predicted = predicted.withColumn(PIPESTATUS, callUDF(PSE, col(TYPESET)));
 
         // output format here!!
-        DataFrame results = predicted.select(LABEL, PREDICTED, /*PIPESTATUS,*/ LASTCOMMAND, WORKINGDIRECTORY);
+        DataFrame results = predicted.select(LABEL, PREDICTED, PIPESTATUS, LASTCOMMAND, WORKINGDIRECTORY);
         Stream.of(results.sort(functions.desc(PREDICTED)).head(ctx.getArgs().length > 0 ? Integer.parseInt(ctx.getArgs()[0]) : 10))
                 .map(Object::toString)
                 .forEach(ctx.out::println);
