@@ -57,6 +57,10 @@ public class Core {
     }
 
     public static void main(String[] args) {
+        //this only is used in the next few lines, hopefully it goes away
+        //option one is write it out somewhere before we start derby (maybe work?)
+        //option two is see if h2 has same requirements and can be used in place of derby
+        //environment variable dependency!
         String valet2k_repo = System.getenv("valet2k_repo");
         String policyPath;
         if (valet2k_repo != null) policyPath = Paths.get(valet2k_repo, "assistant", "security.policy").toString();
