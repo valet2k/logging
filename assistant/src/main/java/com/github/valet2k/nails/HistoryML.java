@@ -1,6 +1,5 @@
 package com.github.valet2k.nails;
 
-import com.github.valet2k.Core;
 import com.github.valet2k.columns.LastCommand;
 import com.github.valet2k.columns.WorkingDirectory;
 import com.martiansoftware.nailgun.Alias;
@@ -21,6 +20,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import static com.github.valet2k.Core.df;
 import static org.apache.spark.sql.functions.*;
 
 /**
@@ -40,7 +40,9 @@ public class HistoryML {
     public static final Pattern PIPESTATUS_PATTERN = Pattern.compile("^array pipestatus=\\( ?(([0-9]{1,3} ?)+)\\)$", Pattern.MULTILINE);
     public static final String PSLE = "PSLE";
     private static final String PIPESTATUS = "PIPESTATUS";
+    private static DecisionTreeRegressionModel model;
 
+    //data frame must possess certain columns, and will have a features column appended
     public static DataFrame extractFeatures(DataFrame df) {
 //      remove nulls so avoid NPE, replace with empties so can use the points
         df = df.withColumn(LASTCOMMAND, when(functions.col(LASTCOMMAND).isNull(), lit("")).otherwise(functions.col(LASTCOMMAND)));
@@ -117,23 +119,14 @@ public class HistoryML {
     }
 
     public static void nailMain(NGContext ctx) {
-        DataFrame df = extractFeatures(Core.df);
-
-        DecisionTreeRegressor decisionTreeRegressor = new DecisionTreeRegressor()
-                .setFeaturesCol(FEATURES)
-                .setLabelCol(LABEL)
-                .setPredictionCol(PREDICTED);
+        DataFrame featuredRecords = extractFeatures(df);
 
         //create and label training set
         //apply pse to all - tolerates none found with 0, but should throw out
-        df = df.withColumn(LABEL, callUDF(PSLE, col(TYPESET)));
-        DataFrame training = df.filter("LABEL != 0");
-        training.show();
+        DataFrame labeledRecords = featuredRecords.withColumn(LABEL, callUDF(PSLE, col(TYPESET)));
+        DataFrame training = labeledRecords.filter("LABEL != 0");
 
-        DecisionTreeRegressionModel fit = decisionTreeRegressor.fit(training);
-
-        DataFrame predicted = fit.transform(df);
-        predicted.show();
+        DataFrame predicted = getModel(training).transform(labeledRecords);
 
         //annotate with pipestatus
         predicted = predicted.withColumn(PIPESTATUS, callUDF(PSE, col(TYPESET)));
@@ -143,8 +136,22 @@ public class HistoryML {
         Stream.of(results.sort(functions.desc(PREDICTED)).head(ctx.getArgs().length > 0 ? Integer.parseInt(ctx.getArgs()[0]) : 10))
                 .map(Object::toString)
                 .forEach(ctx.out::println);
-        ctx.out.println(fit.toDebugString());
+        ctx.out.println(model.toDebugString());
         return;
+    }
+
+    private static DecisionTreeRegressionModel getModel(DataFrame training) {
+        if (model == null)
+            model = trainModel(training);
+        return model;
+    }
+
+    private static DecisionTreeRegressionModel trainModel(DataFrame training) {
+        DecisionTreeRegressor decisionTreeRegressor = new DecisionTreeRegressor()
+                .setFeaturesCol(FEATURES)
+                .setLabelCol(LABEL)
+                .setPredictionCol(PREDICTED);
+        return decisionTreeRegressor.fit(training);
     }
 
     public static String pipestatusFromTypeset(String s) {
