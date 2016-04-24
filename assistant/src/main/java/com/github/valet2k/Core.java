@@ -49,6 +49,8 @@ public class Core {
         return columns;
     }
 
+    //this is an adapter to use drivermanager to get single connections but appear as a clientconnectionpooldatasource
+    //this happened when embedding derby and changing api usage
     static class adp extends ClientConnectionPoolDataSource {
         @Override
         public Connection getConnection() throws SQLException {
@@ -65,8 +67,13 @@ public class Core {
         String policyPath;
         if (valet2k_repo != null) policyPath = Paths.get(valet2k_repo, "assistant", "security.policy").toString();
         else policyPath = "./security.policy";
+        //this is a gross blunt hack to java security policy requirements for derby
+        // maybe it can be replaced with a classpath reference?
+        // also looking hard at totally switching to h2
         System.setProperty("java.security.policy", policyPath);
 
+        //candidate for threadifying
+        //profile first - .run() uses this as server thread and runs RPCs in new threads
         ngServer = new NGServer();
         aliasManager = ngServer.getAliasManager();
         aliasManager.addAlias(HistoryLogger.LOGNEW);
@@ -76,12 +83,17 @@ public class Core {
 
         // TODO: move to logging/db module
         // server
+        //try to constrain db creation location to consistant location - ~/.config/valet2k/derby
+        // might should just specify location in db url - see if derby supports ~ in url like h2 does
         Path path = Paths.get(
                 System.getProperty("user.home"), ".config/valet2k/derby");
         String key = "derby.system.home";
         logger.trace("setting " + key + " to " + path.toString());
         System.setProperty(key, path.toString());
 
+        // can replace this with an autostart h2 url, but should guard against multiple spark/assistant instances
+        // if network and not embedded, bail
+        // start network interface to derby server
         System.setProperty("derby.drda.startNetworkServer", "true");
         try {
             Class.forName("org.apache.derby.jdbc.EmbeddedDriver").newInstance();
@@ -117,7 +129,7 @@ public class Core {
         }
 
         // TODO: move to ml module, and async
-        SparkConf conf = new SparkConf().setAppName("valet").setMaster("local[3]");
+        SparkConf conf = new SparkConf().setAppName("valet").setMaster("local");
         JavaSparkContext sc = new JavaSparkContext(conf);
         sq = new SQLContext(sc);
         df = sq.read().jdbc(DB_URL, TABLE_NAME, new Properties());
