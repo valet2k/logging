@@ -15,10 +15,6 @@ import org.apache.derby.jdbc.ClientConnectionPoolDataSource;
 import org.apache.derby.jdbc.ClientDataSource;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.sql.DataFrame;
-import org.apache.spark.sql.SQLContext;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -26,7 +22,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Properties;
 
 public class Core {
     private static final Logger logger = LogManager.getLogger(Core.class);
@@ -41,9 +36,9 @@ public class Core {
     }
 
     public static ClientDataSource pool;
-    public static DataFrame df;
+//    public static DataFrame df;
     private static final List<LoggingColumn> columns = Lists.newArrayList(new Typeset(), new LastCommand(), new WorkingDirectory());
-    public static SQLContext sq;
+//    public static SQLContext sq;
 
     public static List<LoggingColumn> getColumns() {
         return columns;
@@ -112,13 +107,12 @@ public class Core {
             return;
         }
 
-        // TODO: move to ml module, and async
-        SparkConf conf = new SparkConf().setAppName("valet").setMaster("local[3]");
-        JavaSparkContext sc = new JavaSparkContext(conf);
-        sq = new SQLContext(sc);
-        df = sq.read().jdbc(DB_URL, TABLE_NAME, new Properties());
+//         TODO: move to ml module, and async
+//        SparkConf conf = new SparkConf().setAppName("valet").setMaster("local[3]");
+//        JavaSparkContext sc = new JavaSparkContext(conf);
+//        sq = new SQLContext(sc);
+//        df = sq.read().jdbc(DB_URL, TABLE_NAME, new Properties());
 
-        HistoryML.initUDFs(sq);
 
         logger.info("Starting Nailgun RPC");
         ngServer.run();
