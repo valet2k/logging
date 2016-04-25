@@ -1,5 +1,6 @@
 package com.github.valet2k.nails;
 
+import com.github.valet2k.Core;
 import com.github.valet2k.columns.LastCommand;
 import com.github.valet2k.columns.WorkingDirectory;
 import com.martiansoftware.nailgun.Alias;
@@ -16,20 +17,22 @@ import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.functions;
 import org.apache.spark.sql.types.DataTypes;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.github.valet2k.Core.df;
 import static org.apache.spark.sql.functions.*;
 
 /**
  * Created by automaticgiant on 4/6/16.
  */
-public class HistoryML {
+public class HistoryMl {
     public static final String LASTCOMMAND = new LastCommand().getColumnName();
     public static final String WORKINGDIRECTORY = new WorkingDirectory().getColumnName();
-    public static final Alias LOGML = new Alias("logml", "", HistoryML.class);
+    public static final Alias LOGML = new Alias("logml", "", HistoryMl.class);
     public static final String WORDS = "WORDS";
     public static final String FEATURES = "FEATURES";
     public static final String IDF = "IDF";
@@ -39,8 +42,14 @@ public class HistoryML {
     public static final String LABEL = "LABEL";
     public static final Pattern PIPESTATUS_PATTERN = Pattern.compile("^array pipestatus=\\( ?(([0-9]{1,3} ?)+)\\)$", Pattern.MULTILINE);
     public static final String PSLE = "PSLE";
-    private static final String PIPESTATUS = "PIPESTATUS";
-    private static DecisionTreeRegressionModel model;
+    static final String PIPESTATUS = "PIPESTATUS";
+    static DataFrame data;
+    static DataFrame training;
+    static DecisionTreeRegressionModel model;
+    public static final DecisionTreeRegressor DECISION_TREE_REGRESSOR = new DecisionTreeRegressor()
+            .setFeaturesCol(FEATURES)
+            .setLabelCol(LABEL)
+            .setPredictionCol(PREDICTED);
 
     //data frame must possess certain columns, and will have a features column appended
     public static DataFrame extractFeatures(DataFrame df) {
@@ -116,42 +125,65 @@ public class HistoryML {
                 return pipestatusFromTypeset(s);
             }
         }, DataTypes.StringType);
+        data = extractFeatures(Core.df);
+        training = data.withColumn(LABEL, callUDF(PSLE, col(TYPESET))).filter("LABEL != 0");
     }
 
     public static void nailMain(NGContext ctx) {
-        DataFrame featuredRecords = extractFeatures(df);
+        String[] args = ctx.getArgs();
+        if (args.length < 1) {
+            ctx.err.println("Not enough args - need ml operation at least");
+            ctx.exit(1);
+        }
+        switch (args[0].toLowerCase()) {
+            case "train":
+                getModel();
+                return;
+            case "test":
+                //adding labels for manual testing
+                DataFrame labeledRecords = data.withColumn(LABEL, callUDF(PSLE, col(TYPESET)));
 
-        //create and label training set
-        //apply pse to all - tolerates none found with 0, but should throw out
-        DataFrame labeledRecords = featuredRecords.withColumn(LABEL, callUDF(PSLE, col(TYPESET)));
-        DataFrame training = labeledRecords.filter("LABEL != 0");
+                DataFrame predicted = getModel().transform(labeledRecords);
 
-        DataFrame predicted = getModel(training).transform(labeledRecords);
+                //annotate with pipestatus
+                predicted = predicted.withColumn(PIPESTATUS, callUDF(PSE, col(TYPESET)));
 
-        //annotate with pipestatus
-        predicted = predicted.withColumn(PIPESTATUS, callUDF(PSE, col(TYPESET)));
-
-        // output format here!!
-        DataFrame results = predicted.select(LABEL, PREDICTED, PIPESTATUS, LASTCOMMAND, WORKINGDIRECTORY);
-        Stream.of(results.sort(functions.desc(PREDICTED)).head(ctx.getArgs().length > 0 ? Integer.parseInt(ctx.getArgs()[0]) : 10))
-                .map(Object::toString)
-                .forEach(ctx.out::println);
-        ctx.out.println(model.toDebugString());
+                // output format here!!
+                DataFrame results = predicted.select(LABEL, PREDICTED, PIPESTATUS, LASTCOMMAND, WORKINGDIRECTORY);
+                Stream.of(results.sort(functions.desc(PREDICTED)).head(ctx.getArgs().length > 0 ? Integer.parseInt(ctx.getArgs()[0]) : 10))
+                        .map(Object::toString)
+                        .forEach(ctx.out::println);
+                ctx.out.println(model.toDebugString());
+            case "predict":
+                if (args.length < 2) {
+                    ctx.err.println("Not enough args - need predict + command");
+                    ctx.exit(1);
+                }
+                List<EntryBean> candidates = Arrays.stream(args)
+                        .skip(1)
+                        .parallel()
+                        .map(s -> new EntryBean(ctx.getWorkingDirectory(), s))
+                        .collect(Collectors.toList());
+                DataFrame dataFrame = Core.sq.createDataFrame(candidates, EntryBean.class);
+                DataFrame featuredRecords = extractFeatures(dataFrame);
+                DataFrame predictions = getModel().transform(featuredRecords);
+                DataFrame display = predictions.select(PREDICTED, LASTCOMMAND);
+                Stream.of(display.sort(functions.desc(PREDICTED)).collect())
+                        .map(Object::toString)
+                        .forEach(ctx.out::println);
+                return;
+            default:
+                ctx.err.println("currently supported subcommands:");
+                ctx.err.println("\ttrain - (re)trains model");
+                ctx.err.println("\tpredict n - predict rating of command");
+        }
         return;
     }
 
-    private static DecisionTreeRegressionModel getModel(DataFrame training) {
+    static DecisionTreeRegressionModel getModel() {
         if (model == null)
-            model = trainModel(training);
+            model = DECISION_TREE_REGRESSOR.fit(training);
         return model;
-    }
-
-    private static DecisionTreeRegressionModel trainModel(DataFrame training) {
-        DecisionTreeRegressor decisionTreeRegressor = new DecisionTreeRegressor()
-                .setFeaturesCol(FEATURES)
-                .setLabelCol(LABEL)
-                .setPredictionCol(PREDICTED);
-        return decisionTreeRegressor.fit(training);
     }
 
     public static String pipestatusFromTypeset(String s) {
@@ -174,5 +206,32 @@ public class HistoryML {
         if (s == null || s.isEmpty()) return 0.0; // support for empty/null - throw out for training
         String[] statuses = s.split(" ");
         return Stream.of(statuses).map(Integer::valueOf).anyMatch(integer -> !integer.equals(0)) ? -50.0 : 10.0;
+    }
+
+    public static class EntryBean {
+        private String LASTCOMMAND;
+
+        public String getWORKINGDIRECTORY() {
+            return WORKINGDIRECTORY;
+        }
+
+        public void setWORKINGDIRECTORY(String WORKINGDIRECTORY) {
+            this.WORKINGDIRECTORY = WORKINGDIRECTORY;
+        }
+
+        public String getLASTCOMMAND() {
+            return LASTCOMMAND;
+        }
+
+        public void setLASTCOMMAND(String LASTCOMMAND) {
+            this.LASTCOMMAND = LASTCOMMAND;
+        }
+
+        private String WORKINGDIRECTORY;
+
+        public EntryBean(String wd, String cmd) {
+            setWORKINGDIRECTORY(wd);
+            setLASTCOMMAND(cmd);
+        }
     }
 }

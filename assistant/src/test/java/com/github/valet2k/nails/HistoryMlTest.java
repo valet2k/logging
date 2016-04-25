@@ -18,7 +18,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import static com.github.valet2k.nails.HistoryML.*;
+import static com.github.valet2k.nails.HistoryMl.*;
 import static com.github.valet2k.nails.TestSpark.sc;
 import static com.github.valet2k.nails.TestSpark.sq;
 import static org.apache.spark.sql.types.DataTypes.StringType;
@@ -26,7 +26,7 @@ import static org.apache.spark.sql.types.DataTypes.StringType;
 /**
  * Created by automaticgiant on 4/20/16.
  */
-public class HistoryMLTest implements Serializable {
+public class HistoryMlTest implements Serializable {
 
     static String exampleBad = "asdf\n(1 2 3)\narray pipestatus=( 0 1 0 1 )\nasdf";
     static String exampleBad2 = "asdf\n(1 2 3)\narray pipestatus=(0 1 0 1)\nasdf";

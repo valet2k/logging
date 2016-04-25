@@ -4,10 +4,7 @@ import com.github.valet2k.columns.LastCommand;
 import com.github.valet2k.columns.LoggingColumn;
 import com.github.valet2k.columns.Typeset;
 import com.github.valet2k.columns.WorkingDirectory;
-import com.github.valet2k.nails.HistoryLogger;
-import com.github.valet2k.nails.HistoryML;
-import com.github.valet2k.nails.HistoryRemove;
-import com.github.valet2k.nails.HistoryShow;
+import com.github.valet2k.nails.*;
 import com.google.common.collect.Lists;
 import com.martiansoftware.nailgun.AliasManager;
 import com.martiansoftware.nailgun.NGServer;
@@ -72,14 +69,6 @@ public class Core {
         // also looking hard at totally switching to h2
         System.setProperty("java.security.policy", policyPath);
 
-        //candidate for threadifying
-        //profile first - .run() uses this as server thread and runs RPCs in new threads
-        ngServer = new NGServer();
-        aliasManager = ngServer.getAliasManager();
-        aliasManager.addAlias(HistoryLogger.LOGNEW);
-        aliasManager.addAlias(HistoryRemove.LOGRM);
-        aliasManager.addAlias(HistoryShow.LOGSHOW);
-        aliasManager.addAlias(HistoryML.LOGML);
 
         // TODO: move to logging/db module
         // server
@@ -129,12 +118,22 @@ public class Core {
         }
 
         // TODO: move to ml module, and async
-        SparkConf conf = new SparkConf().setAppName("valet").setMaster("local");
+        SparkConf conf = new SparkConf().setAppName("valet").setMaster("local[*]");
         JavaSparkContext sc = new JavaSparkContext(conf);
         sq = new SQLContext(sc);
         df = sq.read().jdbc(DB_URL, TABLE_NAME, new Properties());
 
-        HistoryML.initUDFs(sq);
+        HistoryMl.initUDFs(sq);
+
+        //TODO: make auto start with promise for alias manager so nails can register themselves
+        //candidate for threadifying
+        //profile first - .run() uses this as server thread and runs RPCs in new threads
+        ngServer = new NGServer();
+        aliasManager = ngServer.getAliasManager();
+        aliasManager.addAlias(HistoryLogger.LOGNEW);
+        aliasManager.addAlias(HistoryRemove.LOGRM);
+        aliasManager.addAlias(HistoryShow.LOGSHOW);
+        aliasManager.addAlias(HistoryMl.LOGML);
 
         logger.info("Starting Nailgun RPC");
         ngServer.run();

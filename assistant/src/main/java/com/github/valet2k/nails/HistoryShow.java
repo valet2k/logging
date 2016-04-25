@@ -19,8 +19,8 @@ public class HistoryShow {
         Stream.of(
                 df
                         .sort(functions.desc("ID"))
-                        .withColumn("PIPESTATUS", functions.callUDF(HistoryML.PSE, df.col(HistoryML.TYPESET)))
-                        .withColumn(HistoryML.LABEL, functions.callUDF(HistoryML.PSLE, df.col(HistoryML.TYPESET)))
+                        .withColumn("PIPESTATUS", functions.callUDF(HistoryMl.PSE, df.col(HistoryMl.TYPESET)))
+                        .withColumn(HistoryMl.LABEL, functions.callUDF(HistoryMl.PSLE, df.col(HistoryMl.TYPESET)))
                         .drop("TYPESET") //too much info
                         .head(ctx.getArgs().length > 0 ? Integer.parseInt(ctx.getArgs()[0]) : 10))
                 .map(Row::toString)
