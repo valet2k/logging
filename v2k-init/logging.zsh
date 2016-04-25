@@ -8,7 +8,3 @@ function v2k-log {
   typeset | $valet2k_ng lognew $(fc -ln -1)
 }
 add-zsh-hook precmd v2k-log
-
-#TODO: startup
-#../nailgun/ng ng-alias | grep lognew > /dev/null || nohup mvn exec:java&
-

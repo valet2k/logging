@@ -2,22 +2,24 @@
 
 
 if [[ ! -p ~/.v2k_suggestion_pipe ]]; then
-    mkfifo ~/.v2k_suggestion_pipe
+  mkfifo ~/.v2k_suggestion_pipe
 fi
 
 export valet2k_repo=$(dirname "$(readlink -e "$0")")
 make -C $valet2k_repo/nailgun-git ng
 export valet2k_ng=$valet2k_repo/nailgun-git/ng
-echo "Entering Valet 2000"
+
+
+#TODO: startup
+#../nailgun/ng ng-alias | grep lognew > /dev/null || nohup mvn exec:java&
 
 socket_name=v2kcom
 # shorthand
-tm="tmux -L $socket_name"
+export tm="tmux -L $socket_name"
 
-${=tm} new-session -d -s user #"zsh zsh_hook.sh)\'; zsh -i"
-#$tm new-window -d -t user -n user
-${=tm} split-window -dl 11 -t user:0.0 "while true; do cat ~/.v2k_suggestion_pipe; done"
-${=tm} send-keys -t user:0.0 "source ${valet2k_repo}/v2k-init/suggestions.zsh;
-source ${valet2k_repo}/v2k-init/create-suggestions.zsh;
-source ${valet2k_repo}/v2k-init/logging.zsh" C-m
-${=tm} attach -t user
+echo "Entering Valet 2000"
+if ${=tm} info &> /dev/null; then #running
+  echo "jk, v2k already running"
+else #not running
+  ${valet2k_repo}/v2k-init/tmux-init.zsh
+fi
