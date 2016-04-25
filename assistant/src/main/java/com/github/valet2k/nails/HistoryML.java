@@ -19,10 +19,12 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -44,28 +46,92 @@ public class HistoryML {
     private static final String PSLE = "PSLE";
     private static final String PIPESTATUS = "PIPESTATUS";
 
+    public static final RandomForest RANDOM_FOREST = new RandomForest();
+    public static final HashedTextVectorCreator HASHED_TEXT_VECTOR_CREATOR = new HashedTextVectorCreator(1000, new NaiveTokenizer(), new WordCount());
+
 
     public static void nailMain(NGContext ctx) throws SQLException {
-        Connection connection = Core.pool.getConnection();
-        HashedTextVectorCreator hashedTextVectorCreator = new HashedTextVectorCreator(1000, new NaiveTokenizer(), new WordCount());
-        ResultSet resultSet = connection.createStatement().executeQuery("SELECT LASTCOMMAND,WORKINGDIRECTORY,TYPESET FROM VALET2K_HISTORY WHERE LASTCOMMAND IS NOT NULL AND WORKINGDIRECTORY IS NOT NULL AND TYPESET IS NOT NULL");
-        List<Pair<DataPointPair<Double>, String>> points = new ArrayList<>();
-        while (resultSet.next()) {
-            String string = resultSet.getString(LASTCOMMAND);
-            String typeset = resultSet.getString(TYPESET);
-            double label = labelFromTypeset(typeset);
-            String description = string + ", " + pipestatusFromTypeset(typeset) + ", " + label + ", ";
-            Vec vec = hashedTextVectorCreator.newText(string);
-            DataPoint dataPoint = new DataPoint(vec);
-            points.add(new Pair<>(new DataPointPair<>(dataPoint, label), description));
+        if (ctx.getArgs().length < 1) {
+            ctx.err.println("need at least one arg");
+            ctx.exit(1);
         }
-        RegressionDataSet regressionDataSet = new RegressionDataSet(points.stream()
-                .parallel()
-                .map(Pair::getFirstItem)
-                .collect(Collectors.toList()));
-        RandomForest randomForest = new RandomForest();
-        randomForest.train(regressionDataSet);
-        points.stream().parallel().map(p->p.getSecondItem()+randomForest.regress(p.getFirstItem().getDataPoint())).forEach(ctx.out::println);
+        Connection connection;
+        ResultSet resultSet;
+        RegressionDataSet regressionDataSet;
+        switch (ctx.getArgs()[0]) {
+            case "train":
+                connection = Core.pool.getConnection();
+                resultSet = connection.createStatement().executeQuery("SELECT LASTCOMMAND,WORKINGDIRECTORY,TYPESET FROM VALET2K_HISTORY WHERE LASTCOMMAND IS NOT NULL AND WORKINGDIRECTORY IS NOT NULL AND TYPESET IS NOT NULL");
+                List<DataPointPair<Double>> trainingPoints = new ArrayList<>();
+                while (resultSet.next()) {
+                    String string = resultSet.getString(LASTCOMMAND);
+                    String typeset = resultSet.getString(TYPESET);
+                    double label = labelFromTypeset(typeset);
+//                    String description = string + ", " + pipestatusFromTypeset(typeset) + ", " + label + ", ";
+                    Vec vec = HASHED_TEXT_VECTOR_CREATOR.newText(string);
+                    DataPoint dataPoint = new DataPoint(vec);
+                    trainingPoints.add(new DataPointPair<>(dataPoint, label));
+                }
+                regressionDataSet = new RegressionDataSet(trainingPoints.stream()
+                        .parallel()
+                        .collect(Collectors.toList()));
+                RANDOM_FOREST.train(regressionDataSet);
+                ctx.exit(0);
+            case "test":
+                connection = Core.pool.getConnection();
+                resultSet = connection.createStatement().executeQuery("SELECT LASTCOMMAND,WORKINGDIRECTORY,TYPESET FROM VALET2K_HISTORY WHERE LASTCOMMAND IS NOT NULL AND WORKINGDIRECTORY IS NOT NULL AND TYPESET IS NOT NULL");
+                List<Pair<DataPointPair<Double>, String>> points = new ArrayList<>();
+                while (resultSet.next()) {
+                    String string = resultSet.getString(LASTCOMMAND);
+                    String typeset = resultSet.getString(TYPESET);
+                    double label = labelFromTypeset(typeset);
+                    String description = string + ", " + pipestatusFromTypeset(typeset) + ", " + label + ", ";
+                    Vec vec = HASHED_TEXT_VECTOR_CREATOR.newText(string);
+                    DataPoint dataPoint = new DataPoint(vec);
+                    points.add(new Pair<>(new DataPointPair<>(dataPoint, label), description));
+                }
+                regressionDataSet = new RegressionDataSet(points.stream()
+                        .parallel()
+                        .map(Pair::getFirstItem)
+                        .collect(Collectors.toList()));
+                RANDOM_FOREST.train(regressionDataSet);
+                points.stream().parallel().map(p -> p.getSecondItem() + RANDOM_FOREST.regress(p.getFirstItem().getDataPoint())).forEach(ctx.out::println);
+                ctx.exit(0);
+            case "suggest":
+                connection = Core.pool.getConnection();
+                resultSet = connection.createStatement().executeQuery("SELECT LASTCOMMAND,WORKINGDIRECTORY FROM VALET2K_HISTORY WHERE LASTCOMMAND IS NOT NULL AND WORKINGDIRECTORY IS NOT NULL");
+                List<Pair<DataPoint, String>> suggestions = new ArrayList<>();
+                while (resultSet.next()) {
+                    String string = resultSet.getString(LASTCOMMAND);
+                    Vec vec = HASHED_TEXT_VECTOR_CREATOR.newText(string);
+                    DataPoint dataPoint = new DataPoint(vec);
+                    suggestions.add(new Pair<>(dataPoint, string));
+                }
+
+                List<String> collect = suggestions
+                        .stream()
+                        .parallel()
+                        .map(p -> new Pair<Double, String>(RANDOM_FOREST.regress(p.getFirstItem()), p.getSecondItem()))
+                        .sorted(Comparator.comparing(Pair::getFirstItem))
+                        .limit(10)
+                        .map(Pair::getSecondItem)
+                        .collect(Collectors.toList());
+                Integer number = null;
+                try {
+                    number = Integer.valueOf(ctx.getArgs()[1]);
+                } catch (Exception e) {
+                }
+                if (number == null) {
+                    collect.stream().forEach(ctx.out::println);
+                } else {
+                    ctx.out.println(collect.get(number));
+                }
+                ctx.exit(0);
+            case "predict":
+                ctx.out.println(RANDOM_FOREST.regress(new DataPoint(HASHED_TEXT_VECTOR_CREATOR.newText(ctx.getArgs()[1]))));
+                ctx.exit(0);
+        }
+
     }
 
 //    public static DataFrame extractFeatures(DataFrame df) {
