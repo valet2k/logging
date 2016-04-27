@@ -98,7 +98,14 @@ public class HistoryMl {
                 List<String> collect = suggestions
                         .stream()
                         .parallel()
-                        .map(p -> new Pair<>(getModel().regress(p.getFirstItem()), p.getSecondItem()))
+                        .map(p -> {
+                            try {
+                                return new Pair<>(getModel().regress(p.getFirstItem()), p.getSecondItem());
+                            } catch (SQLException e) {
+                                e.printStackTrace();
+                                return new Pair<>(0.0, p.getSecondItem());
+                            }
+                        })
                         .sorted(Comparator.comparing(Pair::getFirstItem))
                         .limit(10)
                         .map(Pair::getSecondItem)
