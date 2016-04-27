@@ -2,7 +2,7 @@
 
 #Needs to be integrated with the suggestion system
 function v2k-get-suggestion {
-  echo "suggestion $1"
+  echo $(${=valet2k_ng} logml suggest $1)
 }
 
 function v2k-suggestion {
