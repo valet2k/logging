@@ -2,7 +2,7 @@
 
 #Needs to be integrated with the suggestion system
 function v2k-create-suggestions {
-  ${=valet2k_ng} logml predict "${BUFFER}"
+#  ${=valet2k_ng} logml predict "${BUFFER}"
   echo "$(clear)$(date +"%T") w/ buffer ${BUFFER}:\n$(${=valet2k_ng} logml suggest)" > ~/.v2k_suggestion_pipe
 }
 
