@@ -14,7 +14,6 @@ make -C $valet2k_repo/nailgun-git ng > /dev/null
 export valet2k_ng=$valet2k_repo/nailgun-git/ng
 export valet2k_init=$valet2k_repo/v2k-init
 source ${valet2k_init}/logging.zsh
-${valet2k_ng} logml train
 
 if [[ "$valet2k_in_tmux" = true ]]; then
   source ${valet2k_init}/suggestions.zsh
