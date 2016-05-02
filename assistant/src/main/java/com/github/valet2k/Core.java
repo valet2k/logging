@@ -32,7 +32,7 @@ public class Core {
         logger.trace("Core loaded. user.dir=" + System.getProperty("user.dir"));
     }
 
-    public static ClientDataSource pool;
+    public static ClientDataSource pool = new adp();
     private static final List<LoggingColumn> columns = Lists.newArrayList(new Typeset(), new LastCommand(), new WorkingDirectory());
 
     public static List<LoggingColumn> getColumns() {
@@ -84,7 +84,6 @@ public class Core {
         }
 
         //client
-        pool = new adp();
 
         logger.trace("specifying columns");
         try {

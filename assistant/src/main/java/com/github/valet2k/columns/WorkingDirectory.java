@@ -12,6 +12,9 @@ import static com.github.valet2k.Core.TABLE_NAME;
  * Created by automaticgiant on 4/6/16.
  */
 public class WorkingDirectory implements LoggingColumn {
+
+    public static final String WORKINGDIRECTORY = "WORKINGDIRECTORY";
+
     public boolean update(Connection con, NGContext ctx, int index) throws SQLException {
         PreparedStatement updateStatement = con.prepareStatement("UPDATE " + TABLE_NAME + " SET workingdirectory=? WHERE id=?");
         updateStatement.setString(1, ctx.getWorkingDirectory());
@@ -22,7 +25,7 @@ public class WorkingDirectory implements LoggingColumn {
 
     @Override
     public String getColumnName() {
-        return "WORKINGDIRECTORY";
+        return WORKINGDIRECTORY;
     }
     @Override
     public String getType() {

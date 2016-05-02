@@ -13,6 +13,9 @@ import static com.github.valet2k.Core.TABLE_NAME;
  * Created by automaticgiant on 4/6/16.
  */
 public class LastCommand implements LoggingColumn {
+
+    public static final String LASTCOMMAND = "LASTCOMMAND";
+
     public boolean init(Connection con) throws SQLException {
         try {
             Statement statement = con.createStatement();
@@ -34,6 +37,6 @@ public class LastCommand implements LoggingColumn {
 
     @Override
     public String getColumnName() {
-        return "LASTCOMMAND";
+        return LASTCOMMAND;
     }
 }
