@@ -5,6 +5,7 @@ import com.github.valet2k.columns.LoggingColumn;
 import com.github.valet2k.columns.Typeset;
 import com.github.valet2k.columns.WorkingDirectory;
 import com.github.valet2k.nails.*;
+import com.github.valet2k.nails.UUID;
 import com.google.common.collect.Lists;
 import com.martiansoftware.nailgun.AliasManager;
 import com.martiansoftware.nailgun.NGServer;
@@ -118,6 +119,7 @@ public class Core {
         aliasManager.addAlias(HistoryRemove.LOGRM);
         aliasManager.addAlias(HistoryShow.LOGSHOW);
         aliasManager.addAlias(HistoryMl.LOGML);
+        aliasManager.addAlias(UUID.UUID);
 
         logger.info("Starting Nailgun RPC");
         ngServer.run();
