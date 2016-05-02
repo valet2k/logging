@@ -11,8 +11,7 @@ test -f $maven_zip || curl -O $maven_url
 test -d "apache-maven-3.3.9" || unzip $maven_zip &
 
 # Export all necessary variables, and add folders to the PATH
-export JAVA_HOME="/c/Program files/java/jdk1.8.0_20"
-export PATH=$PATH:$PWD/apache-maven-3.3.9/bin:$PWD/nailgun-git/nailgun-server/target
+export PATH=$PATH:$PWD/apache-maven-3.3.9/bin:$PWD/nailgun-git
 
 # Build the nailgun and its Snapshot
 make -C $valet2k_repo/nailgun-git ng &> /dev/null
@@ -21,6 +20,9 @@ export valet2k_ng=$valet2k_repo/nailgun-git/ng
 cd $valet2k_repo/nailgun-git/nailgun-server
 test -d "target" || mvn clean install &> /dev/null
 cd $lastpwd
+
+# Add a variable which store the path to ng
+export theNailJar="$valet2k_repo/nailgun-server"
 
 # Add a hook function
 autoload add-zsh-hook
@@ -33,6 +35,14 @@ function log(){
 }
 add-zsh-hook precmd log
 
+# Add a function to stop valet2k and restart zsh
+function quit()
+{
+	./$valet2k_ng ng-stop
+	add-zsh-hook -D log
+}
+
+
 cd assistant
 
 # Download the jar if necessary
@@ -42,19 +52,12 @@ jarname=assistant-latest.jar
 test -f $jarname || curl -O $s3
 
 # Start nailgun
-(java -jar assistant-latest.jar &) &> /dev/null
+$valet2k_ng ng-version &> /dev/null || java -jar assistant-latest.jar & &> /dev/null
+sleep 10
+
 #mvn compile exec:java &
 cd ..
 
-
 #../nailgun/ng ng-alias | grep lognew > /dev/null || nohup mvn exec:java&
-
-
 # ../nailgun/ng ng-alias | grep lognew > /dev/null || nohup mvn exec:java &
 # java -jar assistant-1.0-SNAPSHOT.jar &
-#
-# cd $dir
-# cd ..
-# source addhook.zsh
-#
-# cd $olddir
