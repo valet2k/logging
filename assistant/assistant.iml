@@ -20,6 +20,8 @@
     <orderEntry type="library" name="Maven: org.apache.derby:derbynet:10.12.1.1" level="project" />
     <orderEntry type="library" name="Maven: org.apache.derby:derbyclient:10.12.1.1" level="project" />
     <orderEntry type="library" name="Maven: org.apache.derby:derby:10.12.1.1" level="project" />
+    <orderEntry type="library" name="Maven: commons-cli:commons-cli:1.2" level="project" />
+    <orderEntry type="library" name="Maven: com.lexicalscope.jewelcli:jewelcli:0.8.9" level="project" />
     <orderEntry type="library" name="Maven: org.javalite:activejdbc:1.4.11" level="project" />
     <orderEntry type="library" name="Maven: org.javalite:javalite-common:1.4.11" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: junit:junit:4.11" level="project" />

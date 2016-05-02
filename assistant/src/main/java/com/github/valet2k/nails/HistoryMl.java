@@ -2,6 +2,9 @@ package com.github.valet2k.nails;
 
 import com.github.valet2k.Core;
 import com.github.valet2k.LogEntry;
+import com.lexicalscope.jewel.cli.ArgumentValidationException;
+import com.lexicalscope.jewel.cli.CliFactory;
+import com.lexicalscope.jewel.cli.Option;
 import com.martiansoftware.nailgun.Alias;
 import com.martiansoftware.nailgun.NGContext;
 import jsat.classifiers.DataPoint;
@@ -19,8 +22,7 @@ import org.javalite.activejdbc.LazyList;
 
 import java.sql.SQLException;
 import java.time.Instant;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -32,6 +34,7 @@ public class HistoryMl {
     public static final Logger logger = Logger.getLogger(HistoryMl.class);
     public static final Alias LOGML = new Alias("logml", "", HistoryMl.class);
     public static final int HASH_LENGTH = 1000;
+    public static final String SESSION_ID_VAR_NAME = "valet2k_session";
 
     private static HistoryMl instance;
 
@@ -75,14 +78,16 @@ public class HistoryMl {
         //need a reference for getting tvc
         LogEntry.historyMl = instance;
 
-        if (instance.model == null) instance.train();
         switch (args[0]) {
             case "train":
                 //TODO: turn into/make sure retrain
                 instance.train();
                 break;
             case "test":
+                if (instance.model == null) instance.train();
                 instance.commands.stream()
+                        .filter(e -> e.getCmd() != null && !e.getCmd().isEmpty())
+                        .filter(e -> e.getDir() != null && !e.getDir().isEmpty())
                         .map(c -> {
                             c.computedScore = instance.model.regress(new DataPoint(c.getFeatures()));
                             return c;
@@ -96,20 +101,55 @@ public class HistoryMl {
                         .forEach(ctx.out::println);
                 break;
             case "suggest":
-                AtomicInteger i = new AtomicInteger(1);
-                instance.commands.stream()
-                        .map(c -> {
-                            c.computedScore = instance.model.regress(new DataPoint(c.getFeatures()));
-                            return c;
-                        })
-                        .sorted(Comparator.comparingDouble(c -> -c.computedScore))
-                        .limit(10)
-                        .map(e -> String.join("|",
-                                String.valueOf(i.getAndIncrement()),
-                                e.getCmd(),
-                                String.valueOf(e.computedScore)
-                        ))
-                        .forEach(ctx.out::println);
+//                if (instance.model == null) instance.train();
+                args = Arrays.copyOfRange(args, 1, args.length);
+                SuggestArgs parsed;
+                try {
+                    parsed = CliFactory.parseArguments(SuggestArgs.class, args);
+                } catch (ArgumentValidationException e) {
+                    String s = "couldn't parse arguments";
+                    logger.error(s, e);
+                    ctx.err.println(s + e);
+                    ctx.exit(2);
+                    return;
+                }
+                if (parsed.isSuggestionIndex()) {
+                    ctx.out.println(
+                            instance.cache.getOrDefault(
+                                    ctx.getEnv().getProperty("valet2k_session"),
+                                    new ArrayList<>())
+                                    .get(parsed.getSuggestionIndex()).getCmd());
+                    break;
+                } else {
+                    if (instance.model == null) instance.train();
+                    AtomicInteger i = new AtomicInteger(1);
+                    List<LogEntry> suggestions = instance.commands.stream()
+                            .filter(e -> e.getCmd() != null && !e.getCmd().isEmpty())
+                            .filter(e -> e.getDir() != null && !e.getDir().isEmpty())
+                            .map(c -> {
+                                c.computedScore = instance.model.regress(new DataPoint(c.getFeatures()));
+                                return c;
+                            })
+                            .filter(c -> {
+                                if (!parsed.isPrefix()) {
+                                    return true;
+                                } else {
+                                    return c.getCmd().startsWith(parsed.getPrefix());
+                                }
+
+                            })
+                            .sorted(Comparator.comparingDouble(c -> -c.computedScore))
+                            .limit(parsed.getListSize()).collect(Collectors.toList());
+                    instance.cache.put(ctx.getEnv().getProperty(SESSION_ID_VAR_NAME), suggestions);
+                    suggestions.stream()
+                            .map(e -> String.join("|",
+                                    String.valueOf(i.getAndIncrement()),
+                                    e.getCmd(),
+                                    String.valueOf(e.computedScore)
+                            ))
+                            .forEach(ctx.out::println);
+                }
+                break;
             default:
                 ctx.err.println("please enter valid command");
                 ctx.exit(1);
@@ -117,11 +157,29 @@ public class HistoryMl {
         ctx.exit(0);
     }
 
+    private Map<String, List<LogEntry>> cache = new HashMap<>();
+
+    private interface SuggestArgs {
+        @Option(shortName = "n", longName = "limit", defaultValue = {"10"})
+        int getListSize();
+
+        boolean isListSize();
+
+        @Option(shortName = "g", longName = "get")
+        int getSuggestionIndex();
+
+        boolean isSuggestionIndex();
+
+        @Option(shortName = "p", longName = "prefix")
+        String getPrefix();
+
+        boolean isPrefix();
+    }
+
     private Regressor model;
 
-    private long getT()
-    {
-        return Instant.now().getEpochSecond()- startTime.getEpochSecond();
+    private long getT() {
+        return Instant.now().getEpochSecond() - startTime.getEpochSecond();
     }
 
     private void train() {

@@ -37,7 +37,8 @@ public class LogEntry extends Model {
     }
 
     public Vec getFeatures() {
-        Vec features = historyMl.getTvc().newText(getCmd());
+        String cmd = getCmd();
+        Vec features = historyMl.getTvc().newText(cmd);
         HistoryMl.logger.trace("getting " + features.length() + " from " + this);
         return features;
     }
