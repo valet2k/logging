@@ -22,6 +22,7 @@ import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -74,12 +75,13 @@ public class HistoryMl {
         //need a reference for getting tvc
         LogEntry.historyMl = instance;
 
+        if (instance.model == null) instance.train();
         switch (args[0]) {
             case "train":
+                //TODO: turn into/make sure retrain
                 instance.train();
                 break;
             case "test":
-                if (instance.model == null) instance.train();
                 instance.commands.stream()
                         .map(c -> {
                             c.computedScore = instance.model.regress(new DataPoint(c.getFeatures()));
@@ -93,10 +95,26 @@ public class HistoryMl {
                         ))
                         .forEach(ctx.out::println);
                 break;
+            case "suggest":
+                AtomicInteger i = new AtomicInteger(1);
+                instance.commands.stream()
+                        .map(c -> {
+                            c.computedScore = instance.model.regress(new DataPoint(c.getFeatures()));
+                            return c;
+                        })
+                        .sorted(Comparator.comparingDouble(c -> -c.computedScore))
+                        .limit(10)
+                        .map(e -> String.join("|",
+                                String.valueOf(i.getAndIncrement()),
+                                e.getCmd(),
+                                String.valueOf(e.computedScore)
+                        ))
+                        .forEach(ctx.out::println);
             default:
                 ctx.err.println("please enter valid command");
                 ctx.exit(1);
         }
+        ctx.exit(0);
     }
 
     private Regressor model;
