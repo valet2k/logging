@@ -52,7 +52,7 @@ jarname=assistant-latest.jar
 test -f $jarname || curl -O $s3
 
 # Start nailgun
-$valet2k_ng ng-version &> /dev/null || java -jar assistant-latest.jar & &> /dev/null
+$valet2k_ng ng-version &> /dev/null || (java -jar assistant-latest.jar &) &> /dev/null
 sleep 10
 
 #mvn compile exec:java &
