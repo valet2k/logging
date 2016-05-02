@@ -43,10 +43,15 @@ function quit()
 cd assistant
 
 # Download the jar if necessary
-s3=https://s3.amazonaws.com/valet2k/builds/assistant-latest.jar
-jarname=assistant-latest.jar
+s3='https://s3.amazonaws.com/valet2k/builds/'
+jarname='assistant-latest.jar'
 
-test -f $jarname || curl -O $s3
+if curl -sS "$s3$jarname.sha512" | sha512sum -c &> /dev/null; then
+	echo 'Current assistant-latest.jar is up to date'
+else
+	echo 'Downloading the newest assistant-latest.jar'
+	curl -O "$s3$jarname"
+fi
 
 # Start nailgun
 $valet2k_ng ng-version &> /dev/null || (java -jar assistant-latest.jar &) &> /dev/null
