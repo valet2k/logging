@@ -130,20 +130,28 @@
         </pluginRepository>
     </pluginRepositories>
     <dependencies>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.17</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.7.21</version>
+        </dependency>
         <!--for rpc-->
         <dependency>
             <groupId>com.martiansoftware</groupId>
             <artifactId>nailgun-server</artifactId>
             <version>0.9.2-SNAPSHOT</version>
         </dependency>
-
         <!--for ml-->
         <dependency>
             <groupId>com.edwardraff</groupId>
             <artifactId>JSAT</artifactId>
             <version>LATEST</version>
         </dependency>
-
         <!--between these three, we have enough to have embedded server and still connect with outside client-->
         <dependency>
             <groupId>org.apache.derby</groupId>
@@ -175,11 +183,6 @@
             <groupId>com.google.collections</groupId>
             <artifactId>google-collections</artifactId>
             <version>1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <version>1.2.14</version>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
