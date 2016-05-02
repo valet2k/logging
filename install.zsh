@@ -12,7 +12,6 @@ else
   echo "valet2k_repo previously set to '${valet2k_repo}'"
 fi
 
-
 if [[ $(git --git-dir ${valet2k_repo}/.git rev-parse --abbrev-ref HEAD) = 'master' ]]; then
   echo 'Updating by git...'
   git --git-dir ${valet2k_repo}/.git pull
@@ -22,8 +21,9 @@ else
 fi
 
 
-# Download the jar if necessary
 cd ${valet2k_repo}/assistant
+
+# Download the jar if necessary
 s3='https://s3.amazonaws.com/valet2k/builds/'
 jarname='assistant-latest.jar'
 
@@ -34,6 +34,5 @@ else
   curl -O "$s3$jarname"
 fi
 
-
 # Start nailgun
-(java -jar ${valet2k_repo}/assistant/assistant-latest.jar &) &> /dev/null
+(java -jar assistant-latest.jar &) &> /dev/null
