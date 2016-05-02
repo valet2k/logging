@@ -21,7 +21,7 @@ public class LastCommand implements LoggingColumn {
             Statement statement = con.createStatement();
             statement.execute("ALTER TABLE " + TABLE_NAME + " ADD " + getColumnName() + " VARCHAR(32672)");
         } catch (SQLException e) {
-            getLogger().debug("potential init problem in "+getColumnName(), e);
+//            getLogger().debug("potential init problem in "+getColumnName(), e);
         }
         return true;
     }
