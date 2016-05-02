@@ -21,9 +21,6 @@ cd $valet2k_repo/nailgun-git/nailgun-server
 test -d "target" || mvn clean install &> /dev/null
 cd $lastpwd
 
-# Add a variable which store the path to ng
-export theNailJar="$valet2k_repo/nailgun-server"
-
 # Add a hook function
 autoload add-zsh-hook
 add-zsh-hook -d precmd log
@@ -53,7 +50,6 @@ test -f $jarname || curl -O $s3
 
 # Start nailgun
 $valet2k_ng ng-version &> /dev/null || (java -jar assistant-latest.jar &) &> /dev/null
-sleep 10
 
 #mvn compile exec:java &
 cd ..
