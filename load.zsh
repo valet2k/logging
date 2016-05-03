@@ -15,6 +15,14 @@ export valet2k_init=$valet2k_repo/v2k-init
 source ${valet2k_init}/logging.zsh
 
 
+# Cleanly exit tmux
+function quit()
+{       echo "Shutting down Valet..."
+	pkill tmux
+	pkill zsh
+	#$valet2k_ng ng-stop
+}
+
 export valet2k_session=$($valet2k_ng uuid)
 echo $valet2k_session | grep 'Connection refused' && export valet2k_session=$(cd $valet2k_repo/; java -jar assistant/assistant-latest.jar com.github.valet2k.UUID)
 
