@@ -12,6 +12,7 @@ else #not running
   echo "Entering Valet 2000..."
   ${=valet2k_tmux} new-session -d -s user #"zsh zsh_hook.sh)\'; zsh -i"
   #$tm new-window -d -t user -n user
+  ${=valet2k_tmux} split-window -bhdl 35 -t user:0.0 "while true; do cat ~/.v2k_print_pipe; done"
   ${=valet2k_tmux} split-window -dl 11 -t user:0.0 "while true; do cat ~/.v2k_suggestion_pipe; done"
   ${=valet2k_tmux} attach -t user
 fi

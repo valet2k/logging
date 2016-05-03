@@ -21,6 +21,7 @@ echo $valet2k_session | grep 'Connection refused' && export valet2k_session=$(cd
 if [[ "$valet2k_in_tmux" = true ]]; then
   source ${valet2k_init}/suggestions.zsh
   source ${valet2k_init}/create-suggestions.zsh
+  source ${valet2k_init}/directory-tree.zsh
 else
   export valet2k_tmux="tmux -L v2kcom"
 
