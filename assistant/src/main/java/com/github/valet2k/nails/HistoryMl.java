@@ -86,10 +86,10 @@ public class HistoryMl {
         switch (args[0]) {
             case "train":
                 //TODO: turn into/make sure retrain
-                instance.train();
+                instance.train(ctx);
                 break;
             case "test":
-                if (instance.model == null) instance.train();
+                if (instance.model == null) instance.train(ctx);
                 instance.commands.stream()
                         .filter(e -> e.getCmd() != null && !e.getCmd().isEmpty())
                         .filter(e -> e.getDir() != null && !e.getDir().isEmpty())
@@ -117,7 +117,7 @@ public class HistoryMl {
     }
 
     private static void suggest(NGContext ctx) {
-        String[] args = Arrays.copyOfRange(ctx.getArgs(), 1, ctx.getArgs().length);
+        String[] args = shift(ctx.getArgs());
         SuggestArgs parsed;
         try {
             parsed = CliFactory.parseArguments(SuggestArgs.class, args);
@@ -137,7 +137,7 @@ public class HistoryMl {
             target.getAndIncrementSelected();
             ctx.out.println(target.getCmd());
         } else { // is not -g
-            if (instance.model == null) instance.train();
+            if (instance.model == null) instance.train(ctx);
             AtomicInteger i = new AtomicInteger(1);
             List<LogEntry> suggestions = instance.commands.stream()
                     .filter(e -> e.getCmd() != null && !e.getCmd().isEmpty())
@@ -162,6 +162,10 @@ public class HistoryMl {
         }
     }
 
+    private static String[] shift(String[] original) {
+        return Arrays.copyOfRange(original, 1, original.length);
+    }
+
     private Map<String, List<LogEntry>> cache = new HashMap<>();
 
     private interface SuggestArgs {
@@ -179,6 +183,12 @@ public class HistoryMl {
         String getPrefix();
 
         boolean isPrefix();
+    }
+
+    private interface TrainArgs {
+        @Option(shortName = "v", longName = "vectorLength")
+        int getVectorLength();
+        boolean isVectorLength();
     }
 
     private Regressor model;
@@ -230,8 +240,20 @@ public class HistoryMl {
     }
 
 
-    private void train() {
+    private void train(NGContext ctx) {
+        String[] args = shift(ctx.getArgs());
+        TrainArgs parsed;
+        try {
+            parsed = CliFactory.parseArguments(TrainArgs.class, args);
+        } catch (ArgumentValidationException e) {
+            String s = "couldn't parse arguments";
+            logger.error(s, e);
+            ctx.err.println(s + e);
+            ctx.exit(2);
+            return;
+        }
         tvc = null;
+        if (parsed.isVectorLength()) hashFeatureLength = parsed.getVectorLength();
         getTvc();
         top3Freq();
         DecisionTree decisionTree = new DecisionTree();
