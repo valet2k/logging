@@ -10,7 +10,10 @@ import com.martiansoftware.nailgun.NGContext;
 import jsat.classifiers.DataPoint;
 import jsat.classifiers.DataPointPair;
 import jsat.classifiers.trees.DecisionTree;
+import jsat.classifiers.trees.RandomDecisionTree;
+import jsat.classifiers.trees.RandomForest;
 import jsat.regression.RegressionDataSet;
+import jsat.regression.RegressionModelEvaluation;
 import jsat.regression.Regressor;
 import jsat.text.HashedTextDataLoader;
 import jsat.text.TextVectorCreator;
@@ -37,6 +40,8 @@ public class HistoryMl {
     public static final String SESSION_ID_VAR_NAME = "valet2k_session";
 
     private static HistoryMl instance;
+
+    private RegressionDataSet dataSet;
 
     private LazyList<LogEntry> commands = LogEntry.findAll();
 
@@ -93,20 +98,24 @@ public class HistoryMl {
                 break;
             case "test":
                 if (instance.model == null) instance.train(ctx);
-                instance.commands.stream()
-                        .filter(e -> e.getCmd() != null && !e.getCmd().isEmpty())
-                        .filter(e -> e.getDir() != null && !e.getDir().isEmpty())
-                        .map(c -> {
-                            c.computedScore = instance.model.regress(new DataPoint(c.getFeatures()));
-                            return c;
-                        })
-                        .sorted(Comparator.comparingDouble(c -> -c.computedScore))
-                        .map(e -> String.join("|",
-                                String.valueOf(e.computedScore),
-                                String.valueOf(e.getLabel()),
-                                e.getCmd()
-                        ))
-                        .forEach(ctx.out::println);
+//                instance.commands.stream()
+//                        .filter(e -> e.getCmd() != null && !e.getCmd().isEmpty())
+//                        .filter(e -> e.getDir() != null && !e.getDir().isEmpty())
+//                        .map(c -> {
+//                            c.computedScore = instance.model.regress(new DataPoint(c.getFeatures()));
+//                            return c;
+//                        })
+//                        .sorted(Comparator.comparingDouble(c -> -c.computedScore))
+//                        .map(e -> String.join("|",
+//                                String.valueOf(e.computedScore),
+//                                String.valueOf(e.getLabel()),
+//                                e.getCmd()
+//                        ))
+//                        .forEach(ctx.out::println);
+
+                RegressionModelEvaluation modelEvaluation = new RegressionModelEvaluation(instance.model, instance.dataSet, Executors.newWorkStealingPool());
+                modelEvaluation.evaluateCrossValidation(10);
+                System.out.println("Cross Validation error rate is " + modelEvaluation.getMeanError()/instance.dataSet.getSampleSize() + "%");
                 break;
             case "suggest":
 //                if (instance.model == null) instance.train();
@@ -259,6 +268,8 @@ public class HistoryMl {
 //        if (parsed.isVectorLength()) hashFeatureLength = parsed.getVectorLength();
         getTvc();
         top3Freq();
+
+        RandomForest forest = new RandomForest();
         DecisionTree decisionTree = new DecisionTree();
         model = decisionTree;
         List<DataPointPair<Double>> training = commands
@@ -271,6 +282,7 @@ public class HistoryMl {
 
         Instant pretrain = Instant.now();
         RegressionDataSet dataSet = new RegressionDataSet(training);
+        this.dataSet = dataSet;
 //        dataSet.applyTransform(new DataTransform() {
 //            DataTransform transform;
 //            {
@@ -291,6 +303,7 @@ public class HistoryMl {
 //        logger.debug("pca in " + (Instant.now().getEpochSecond()-pretrain.getEpochSecond()));
         logger.info("training " + model + " on " + training.size() + " examples");
         decisionTree.train(dataSet, Executors.newWorkStealingPool());
+//        forest.train(dataSet);
         long s = Instant.now().getEpochSecond() - pretrain.getEpochSecond();
         logger.debug("trained in " + s);
     }
