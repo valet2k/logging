@@ -134,8 +134,8 @@ public class HistoryMl {
                     ctx.getEnv().getProperty("valet2k_session"),
                     new ArrayList<>())
                     .get(parsed.getSuggestionIndex());
-            ctx.out.println(
-                    target.getCmd());
+            target.getAndIncrementSelected();
+            ctx.out.println(target.getCmd());
         } else { // is not -g
             if (instance.model == null) instance.train();
             AtomicInteger i = new AtomicInteger(1);

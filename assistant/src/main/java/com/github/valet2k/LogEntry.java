@@ -87,4 +87,16 @@ public class LogEntry extends Model {
         return features;
     }
     public Double computedScore;
+
+    public int getSelected() {
+        Integer selected = this.getInteger("SELECTED");
+        return selected==null?0:selected;
+    }
+
+    public int getAndIncrementSelected(){
+        int old = getSelected();
+        this.setInteger("SELECTED", getSelected() + 1);
+        this.saveIt();
+        return old;
+    }
 }
