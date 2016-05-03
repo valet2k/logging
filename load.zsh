@@ -8,7 +8,7 @@ fi
 #TODO: startup
 #../nailgun/ng ng-alias | grep lognew > /dev/null || nohup mvn exec:java&
 
-valet2k_repo="$(dirname "$0:a")"
+export valet2k_repo="$(dirname "$0:a")"
 make -C $valet2k_repo/nailgun-git ng > /dev/null
 export valet2k_ng=$valet2k_repo/nailgun-git/ng
 export valet2k_init=$valet2k_repo/v2k-init
@@ -22,6 +22,7 @@ if [[ "$valet2k_in_tmux" = true ]]; then
   source ${valet2k_init}/suggestions.zsh
   source ${valet2k_init}/create-suggestions.zsh
 else
+  ${valet2k_repo}/install.zsh
   export valet2k_tmux="tmux -L v2kcom"
 
   if [[ "$valet2k_auto_tmux" = true ]]; then #set valet2k_auto_tmux in .zshrc
