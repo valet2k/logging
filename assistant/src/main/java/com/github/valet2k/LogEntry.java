@@ -29,11 +29,6 @@ public class LogEntry extends Model {
 
     public double getLabel() {
         double score = 0;
-        if (getCmd().startsWith("ls")) score--;
-        if (getCmd().startsWith("^")) score -= 10;
-        if (getCmd().startsWith("rm")) score -= 5;
-        if (getCmd().contains("~")) score += 2;
-        if (getCmd().startsWith("cd")) score++;
         score += labelFromExtension(getCmd());
         if (historyMl.hm.containsKey(getCmd().split(" ")[0])) score += 30;
         return score;
