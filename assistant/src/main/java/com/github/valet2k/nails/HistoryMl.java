@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 public class HistoryMl {
     public static final Logger logger = Logger.getLogger(HistoryMl.class);
     public static final Alias LOGML = new Alias("logml", "", HistoryMl.class);
-    public static final int HASH_LENGTH = 1000;
+    public static int hashFeatureLength = 1000;
     public static final String SESSION_ID_VAR_NAME = "valet2k_session";
 
     private static HistoryMl instance;
@@ -44,14 +44,17 @@ public class HistoryMl {
     public TextVectorCreator getTvc() {
         if (tvc != null) return tvc;
         Instant tvcLoadStart = Instant.now();
-        HashedTextDataLoader ldr = new HashedTextDataLoader(HASH_LENGTH, new NaiveTokenizer(), new TfIdf()) {
+
+        HashedTextDataLoader ldr = new HashedTextDataLoader(hashFeatureLength, new NaiveTokenizer(), new TfIdf()) {
             @Override
             protected void initialLoad() {
                 commands.stream()
                         .filter(e -> e.getCmd() != null && !e.getCmd().isEmpty())
                         .filter(e -> e.getDir() != null && !e.getDir().isEmpty())
                         .forEach(c -> addOriginalDocument(c.getCmd() + " " + c.getDir()));
-                logger.debug("loaded " + this.vectors.size() + " tokens");
+                int newHashFeatureLength = Math.max(this.vectors.size() * 2, hashFeatureLength);
+                logger.debug("loaded " + this.vectors.size() + " tokens. hashFeatureLength was/is " + hashFeatureLength + "/" + newHashFeatureLength);
+                hashFeatureLength = newHashFeatureLength;
             }
         };
         ldr.getDataSet();
@@ -183,6 +186,8 @@ public class HistoryMl {
     }
 
     private void train() {
+        tvc = null;
+        getTvc();
         DecisionTree decisionTree = new DecisionTree();
         model = decisionTree;
         List<DataPointPair<Double>> training = commands
