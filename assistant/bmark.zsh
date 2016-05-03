@@ -1,9 +1,10 @@
 #!/usr/bin/env zsh
 $valet2k_ng ng-stop
-(mvn exec:java &> assistant.log) &
+prefix=$(git rev-parse HEAD)
+
+(mvn exec:java &> $prefix.assistant.log) &
 sleep 10
 
-prefix=$(git rev-parse HEAD)
 
 date > $prefix.default.log
 $valet2k_ng logml train &>> $prefix.default.log
