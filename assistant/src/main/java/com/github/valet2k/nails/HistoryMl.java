@@ -245,18 +245,18 @@ public class HistoryMl {
 
     private void train(NGContext ctx) {
         String[] args = shift(ctx.getArgs());
-        TrainArgs parsed;
-        try {
-            parsed = CliFactory.parseArguments(TrainArgs.class, args);
-        } catch (ArgumentValidationException e) {
-            String s = "couldn't parse arguments";
-            logger.error(s, e);
-            ctx.err.println(s + e);
-            ctx.exit(2);
-            return;
-        }
+//        TrainArgs parsed;
+//        try {
+//            parsed = CliFactory.parseArguments(TrainArgs.class, args);
+//        } catch (ArgumentValidationException e) {
+//            String s = "couldn't parse arguments";
+//            logger.error(s, e);
+//            ctx.err.println(s + e);
+//            ctx.exit(2);
+//            return;
+//        }
         tvc = null;
-        if (parsed.isVectorLength()) hashFeatureLength = parsed.getVectorLength();
+//        if (parsed.isVectorLength()) hashFeatureLength = parsed.getVectorLength();
         getTvc();
         top3Freq();
         DecisionTree decisionTree = new DecisionTree();

@@ -3,7 +3,7 @@
 #Needs to be integrated with the suggestion system
 function v2k-create-suggestions {
 #  ${=valet2k_ng} logml predict "${BUFFER}"
-  echo "$(clear)$(date +"%T") w/ buffer ${BUFFER}:\n$($valet2k_ng logml suggest)" > "$HOME/.v2k_suggestion_pipe"
+  echo "$(clear)$(date +"%T") w/ buffer ${BUFFER}:\n$($valet2k_ng logml suggest -p ''$BUFFER)" > "$HOME/.v2k_suggestion_pipe"
 }
 
 #Widget not working, may make this its own function and bind tab to it
