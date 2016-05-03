@@ -6,7 +6,7 @@ if [[ $ZSH_EVAL_CONTEXT =~ :file$ ]]; then
 fi
 
 if [[ -z ${valet2k_repo+x} ]]; then
-  valet2k_repo=$(dirname "$(readlink -e "$0")")
+  export valet2k_repo="$(dirname "$0:a")"
   echo "valet2k_repo set to '${valet2k_repo}'"
 else
   echo "valet2k_repo previously set to '${valet2k_repo}'"
@@ -31,8 +31,9 @@ if curl -sS "$s3$jarname.sha512" | sha512sum -c &> /dev/null; then
   echo 'Current assistant-latest.jar is up to date'
 else
   echo 'Downloading newest assistant-latest.jar'
+  ${valet2k_ng} ng-stop
   curl -O "$s3$jarname"
 fi
 
 # Start nailgun
-(java -jar assistant-latest.jar &) &> /dev/null
+$valet2k_ng ng-alias | grep lognew > /dev/null || (cd $valet2k_repo/assistant;java -jar assistant-latest.jar &> /dev/null &!)

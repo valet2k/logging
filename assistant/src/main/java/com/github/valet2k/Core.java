@@ -1,9 +1,6 @@
 package com.github.valet2k;
 
-import com.github.valet2k.columns.LastCommand;
-import com.github.valet2k.columns.LoggingColumn;
-import com.github.valet2k.columns.Typeset;
-import com.github.valet2k.columns.WorkingDirectory;
+import com.github.valet2k.columns.*;
 import com.github.valet2k.nails.*;
 import com.github.valet2k.nails.UUID;
 import com.google.common.collect.Lists;
@@ -34,7 +31,7 @@ public class Core {
     }
 
     public static ClientDataSource pool = new adp();
-    private static final List<LoggingColumn> columns = Lists.newArrayList(new Typeset(), new LastCommand(), new WorkingDirectory());
+    private static final List<LoggingColumn> columns = Lists.newArrayList(new Typeset(), new LastCommand(), new WorkingDirectory(), new Selected());
 
     public static List<LoggingColumn> getColumns() {
         return columns;
