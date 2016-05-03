@@ -42,6 +42,8 @@ public class HistoryMl {
     private static HistoryMl instance;
 
     private LazyList<LogEntry> commands = LogEntry.findAll();
+
+    public HashMap<String, Integer> hm = new HashMap<String, Integer>();
     private TextVectorCreator tvc;
 
     public TextVectorCreator getTvc() {
@@ -208,7 +210,7 @@ public class HistoryMl {
         return hm;
     }
 
-    public HashMap<String, Integer> top3Freq() {
+    public void top3Freq() {
 
         HashMap<String, Integer> resultMap = frequencyFromList();
         HashMap<String, Integer> hm = new HashMap<String, Integer>();
@@ -228,13 +230,14 @@ public class HistoryMl {
                 }
             }
         }
-        return hm;
+        this.hm = hm;
     }
 
 
     private void train() {
         tvc = null;
         getTvc();
+        top3Freq();
         DecisionTree decisionTree = new DecisionTree();
         model = decisionTree;
         List<DataPointPair<Double>> training = commands
@@ -243,6 +246,8 @@ public class HistoryMl {
                 .filter(e -> e.getDir() != null && !e.getDir().isEmpty())
                 .map(c -> new DataPointPair<>(new DataPoint(c.getFeatures()), c.getLabel()))
                 .collect(Collectors.toList());
+
+
         Instant pretrain = Instant.now();
         RegressionDataSet dataSet = new RegressionDataSet(training);
 //        dataSet.applyTransform(new DataTransform() {

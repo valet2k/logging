@@ -35,7 +35,7 @@ public class LogEntry extends Model {
         if (getCmd().contains("~")) score += 2;
         if (getCmd().startsWith("cd")) score++;
         score += labelFromExtension(getCmd());
-        if (historyMl.top3Freq().containsKey(getCmd().split(" ")[0])) score += 30;
+        if (historyMl.hm.containsKey(getCmd().split(" ")[0])) score += 30;
         return score;
     }
 
