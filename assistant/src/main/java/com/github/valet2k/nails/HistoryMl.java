@@ -53,7 +53,10 @@ public class HistoryMl {
                 commands.stream()
                         .filter(e -> e.getCmd() != null && !e.getCmd().isEmpty())
                         .filter(e -> e.getDir() != null && !e.getDir().isEmpty())
-                        .forEach(c -> addOriginalDocument(c.getCmd() + " " + c.getDir()));
+                        .forEach(c -> {
+                            if (c == null) return;
+                            addOriginalDocument(c.getCmd() + " " + c.getDir());
+                        });
                 int newHashFeatureLength = Math.max(this.vectors.size() * 2, hashFeatureLength);
                 logger.debug("loaded " + this.vectors.size() + " tokens. hashFeatureLength was/is " + hashFeatureLength + "/" + newHashFeatureLength);
                 hashFeatureLength = newHashFeatureLength;
