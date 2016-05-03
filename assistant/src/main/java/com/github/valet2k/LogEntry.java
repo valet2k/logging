@@ -1,7 +1,9 @@
 package com.github.valet2k;
 
 import com.github.valet2k.nails.HistoryMl;
+import jsat.linear.ConcatenatedVec;
 import jsat.linear.Vec;
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.javalite.activejdbc.Model;
 import org.javalite.activejdbc.annotations.Table;
 
@@ -77,7 +79,10 @@ public class LogEntry extends Model {
 
     public Vec getFeatures() {
         String cmd = getCmd();
-        Vec features = historyMl.getTvc().newText(cmd);
+        String dir = getDir();
+        Vec commands = historyMl.getTvc().newText(cmd);
+        Vec directories = historyMl.getTvc().newText(dir);
+        ConcatenatedVec features = new ConcatenatedVec(commands, directories);
         HistoryMl.logger.trace("getting " + features.length() + " from " + this);
         return features;
     }
