@@ -107,59 +107,59 @@ public class HistoryMl {
                 break;
             case "suggest":
 //                if (instance.model == null) instance.train();
-                args = Arrays.copyOfRange(args, 1, args.length);
-                SuggestArgs parsed;
-                try {
-                    parsed = CliFactory.parseArguments(SuggestArgs.class, args);
-                } catch (ArgumentValidationException e) {
-                    String s = "couldn't parse arguments";
-                    logger.error(s, e);
-                    ctx.err.println(s + e);
-                    ctx.exit(2);
-                    return;
-                }
-                if (parsed.isSuggestionIndex()) {
-                    ctx.out.println(
-                            instance.cache.getOrDefault(
-                                    ctx.getEnv().getProperty("valet2k_session"),
-                                    new ArrayList<>())
-                                    .get(parsed.getSuggestionIndex()).getCmd());
-                    break;
-                } else {
-                    if (instance.model == null) instance.train();
-                    AtomicInteger i = new AtomicInteger(1);
-                    List<LogEntry> suggestions = instance.commands.stream()
-                            .filter(e -> e.getCmd() != null && !e.getCmd().isEmpty())
-                            .filter(e -> e.getDir() != null && !e.getDir().isEmpty())
-                            .map(c -> {
-                                c.computedScore = instance.model.regress(new DataPoint(c.getFeatures()));
-                                return c;
-                            })
-                            .filter(c -> {
-                                if (!parsed.isPrefix()) {
-                                    return true;
-                                } else {
-                                    return c.getCmd().startsWith(parsed.getPrefix());
-                                }
-
-                            })
-                            .sorted(Comparator.comparingDouble(c -> -c.computedScore))
-                            .limit(parsed.getListSize()).collect(Collectors.toList());
-                    instance.cache.put(ctx.getEnv().getProperty(SESSION_ID_VAR_NAME), suggestions);
-                    suggestions.stream()
-                            .map(e -> String.join("|",
-                                    String.valueOf(i.getAndIncrement()),
-                                    e.getCmd(),
-                                    String.valueOf(e.computedScore)
-                            ))
-                            .forEach(ctx.out::println);
-                }
+                suggest(ctx);
                 break;
             default:
                 ctx.err.println("please enter valid command");
                 ctx.exit(1);
         }
         ctx.exit(0);
+    }
+
+    private static void suggest(NGContext ctx) {
+        String[] args = Arrays.copyOfRange(ctx.getArgs(), 1, ctx.getArgs().length);
+        SuggestArgs parsed;
+        try {
+            parsed = CliFactory.parseArguments(SuggestArgs.class, args);
+        } catch (ArgumentValidationException e) {
+            String s = "couldn't parse arguments";
+            logger.error(s, e);
+            ctx.err.println(s + e);
+            ctx.exit(2);
+            return;
+        }
+        // is -g
+        if (parsed.isSuggestionIndex()) {
+            LogEntry target = instance.cache.getOrDefault(
+                    ctx.getEnv().getProperty("valet2k_session"),
+                    new ArrayList<>())
+                    .get(parsed.getSuggestionIndex());
+            ctx.out.println(
+                    target.getCmd());
+        } else { // is not -g
+            if (instance.model == null) instance.train();
+            AtomicInteger i = new AtomicInteger(1);
+            List<LogEntry> suggestions = instance.commands.stream()
+                    .filter(e -> e.getCmd() != null && !e.getCmd().isEmpty())
+                    .filter(e -> e.getDir() != null && !e.getDir().isEmpty())
+                    .map(c -> {
+                        c.computedScore = instance.model.regress(new DataPoint(c.getFeatures()));
+                        return c;
+                    })
+                    .filter(c -> {
+                        return !parsed.isPrefix() || c.getCmd().startsWith(parsed.getPrefix());
+                    })
+                    .sorted(Comparator.comparingDouble(c -> -c.computedScore))
+                    .limit(parsed.getListSize()).collect(Collectors.toList());
+            instance.cache.put(ctx.getEnv().getProperty(SESSION_ID_VAR_NAME), suggestions);
+            suggestions.stream()
+                    .map(e -> String.join("|",
+                            String.valueOf(i.getAndIncrement()),
+                            e.getCmd(),
+                            String.valueOf(e.computedScore)
+                    ))
+                    .forEach(ctx.out::println);
+        }
     }
 
     private Map<String, List<LogEntry>> cache = new HashMap<>();
