@@ -5,6 +5,8 @@ import jsat.linear.Vec;
 import org.javalite.activejdbc.Model;
 import org.javalite.activejdbc.annotations.Table;
 
+import java.io.File;
+
 import static com.github.valet2k.columns.LastCommand.LASTCOMMAND;
 import static com.github.valet2k.columns.WorkingDirectory.WORKINGDIRECTORY;
 
@@ -16,6 +18,7 @@ public class LogEntry extends Model {
 
     public static HistoryMl historyMl;
 
+
     public String getCmd() {
         return this.getString(LASTCOMMAND);
     }
@@ -26,15 +29,55 @@ public class LogEntry extends Model {
 
     public double getLabel() {
         double score = 0;
-        if (getCmd().contains("commit")) score++;
-        if (getCmd().startsWith("git")) score++;
         if (getCmd().startsWith("ls")) score--;
         if (getCmd().startsWith("^")) score -= 10;
         if (getCmd().startsWith("rm")) score -= 5;
         if (getCmd().contains("~")) score += 2;
         if (getCmd().startsWith("cd")) score++;
+        score += labelFromExtension(getCmd());
+        if (historyMl.top3Freq().containsKey(getCmd().split(" ")[0])) score += 30;
         return score;
     }
+
+    public Double labelFromExtension(String command) {
+        String currentDirectory = this.getDir();
+        File f = new File(currentDirectory);
+        File[] listOfFiles = f.listFiles();
+        String[] splited = command.split(" ");
+        Boolean gitFlag = false;
+        Boolean makeFlag = false;
+        Boolean mvnFlag = false;
+
+        Double counter = 0.0;
+        for (File file : listOfFiles) {
+            if (file.isFile()) {
+
+                if(file.getName().contains("git")) {
+                    gitFlag = true;
+                }
+                if(file.getName().contains("make")) {
+                    makeFlag = true;
+                }
+                else if(file.getName().contains("pom.xml")) {
+                    mvnFlag = true;
+                }
+            }
+        }
+
+        if(command.equals("git") && gitFlag) {
+            counter += 1;
+        }
+
+        if(command.equals("make") && makeFlag) {
+            counter += 1;
+        }
+
+        if(command.equals("mvn") && mvnFlag) {
+            counter += 1;
+        }
+        return counter;
+    }
+
 
     public Vec getFeatures() {
         String cmd = getCmd();
