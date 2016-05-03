@@ -8,7 +8,7 @@ fi
 #TODO: startup
 #../nailgun/ng ng-alias | grep lognew > /dev/null || nohup mvn exec:java&
 
-valet2k_repo=$(dirname "$(readlink -e "$0")")
+valet2k_repo="$(dirname "$0:a")"
 make -C $valet2k_repo/nailgun-git ng > /dev/null
 export valet2k_ng=$valet2k_repo/nailgun-git/ng
 export valet2k_init=$valet2k_repo/v2k-init
