@@ -20,15 +20,12 @@ import org.apache.log4j.Logger;
 import org.javalite.activejdbc.Base;
 import org.javalite.activejdbc.LazyList;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
-import static com.github.valet2k.columns.LastCommand.LASTCOMMAND;
 
 /**
  * Created by automaticgiant on 4/6/16.
@@ -193,20 +190,19 @@ public class HistoryMl {
 
     public HashMap<String, Integer> frequencyFromList() {
 
-        HashMap<String, Integer> hm  = new HashMap<String, Integer>();
+        HashMap<String, Integer> hm = new HashMap<String, Integer>();
 
-        for(int i = 0; i < instance.commands.size(); i++) {
-
-            String string = instance.commands.get(i).getCmd();
-            String[] splited = string.split(" ");
-
-            if(hm.containsKey(splited[0])) {
-                hm.put(splited[0], hm.get(splited[0]) + 1);
-            }
-            else {
-                hm.put(splited[0], 1);
-            }
-        }
+        instance.commands.stream()
+                .filter(e -> e.getCmd() != null && !e.getCmd().isEmpty())
+                .filter(e -> e.getDir() != null && !e.getDir().isEmpty())
+                .forEach(e -> {
+                    String[] splitted = e.getCmd().split(" ");
+                    if (hm.containsKey(splitted[0])) {
+                        hm.put(splitted[0], hm.get(splitted[0]) + 1);
+                    } else {
+                        hm.put(splitted[0], 1);
+                    }
+                });
         return hm;
     }
 

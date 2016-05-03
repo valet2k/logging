@@ -43,6 +43,7 @@ public class LogEntry extends Model {
         String currentDirectory = this.getDir();
         File f = new File(currentDirectory);
         File[] listOfFiles = f.listFiles();
+        if (listOfFiles==null) return 0d;
         String[] splited = command.split(" ");
         Boolean gitFlag = false;
         Boolean makeFlag = false;
