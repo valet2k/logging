@@ -42,10 +42,7 @@ nails can be executed like `$valet2k_ng logshow` after load.zsh is sourced
 
 ##end-User installation
 * clone this repo
-* download latest build jar into assistant project folder under repo root (later
-  will be automated)
-* launch in assistant folder (not more than one at a time)
-* source load.zsh to add rpc and hooks
+* add `source load.zsh` to your ~/.zshrc file (make load.zsh an absolute path on your machine)
 
 ##developer install
 * Can use any ide with maven integration, or use maven directly
